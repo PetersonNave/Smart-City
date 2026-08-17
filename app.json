@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "abertura-os",
-    "slug": "abertura-os",
+    "name": "Smart City",
+    "slug": "smart-city",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
