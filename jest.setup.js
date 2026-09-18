@@ -6,6 +6,8 @@
 // effect of the preset.
 global.IS_REACT_ACT_ENVIRONMENT = true;
 
+require('react-native-reanimated').setUpTests();
+
 // @testing-library/react-native's internal `wrapAsync` helper (used by both
 // `render()` and `waitFor()` to flush pending microtasks from async effects)
 // deliberately flips `IS_REACT_ACT_ENVIRONMENT` to `false` for the duration

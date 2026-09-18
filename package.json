@@ -16,7 +16,9 @@
     "lucide-react-native": "^1.47.0",
     "react": "19.2.3",
     "react-native": "0.86.3",
-    "react-native-svg": "15.15.4"
+    "react-native-reanimated": "4.5.1",
+    "react-native-svg": "15.15.4",
+    "react-native-worklets": "0.10.1"
   },
   "devDependencies": {
     "@react-native/jest-preset": "^0.86.3",
@@ -39,6 +41,7 @@
   "private": true,
   "jest": {
     "preset": "jest-expo",
+    "resolver": "react-native-worklets/jest/resolver",
     "setupFilesAfterEnv": [
       "<rootDir>/jest.setup.js"
     ],
