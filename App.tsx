@@ -1,7 +1,26 @@
+import { useEffect } from 'react';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { colors, fontAssets, fonts } from './src/theme';
+
+SplashScreen.preventAutoHideAsync();
+
 export default function App() {
+  const [fontsLoaded, fontError] = useFonts(fontAssets);
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>ResolveAí</Text>
@@ -20,11 +39,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   title: {
+    fontFamily: fonts.inter.extraBold,
     fontSize: 32,
-    fontWeight: '700',
-    color: '#1a1a1a',
+    color: colors.navy,
   },
   subtitle: {
+    fontFamily: fonts.inter.medium,
     fontSize: 16,
     color: '#666',
   },
