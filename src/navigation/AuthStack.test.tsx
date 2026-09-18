@@ -2,6 +2,10 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { AuthStack } from './AuthStack';
 
+jest.mock('../auth/AuthContext', () => ({
+  useAuth: () => ({ login: jest.fn() }),
+}));
+
 describe('AuthStack', () => {
   it('starts on Login and navigates to Cadastro', () => {
     render(
