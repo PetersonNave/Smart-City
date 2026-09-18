@@ -1,6 +1,6 @@
-# Smart City - App Mobile de Gestão de Demandas Urbanas
+# ResolveAí - App Mobile de Gestão de Demandas Urbanas
 
-Bem-vindos ao repositório do app mobile da Plataforma de Gestão de Demandas Urbanas! Este projeto é o cliente **mobile** (Expo / React Native) do mesmo produto Smart City cuja versão web centraliza o registro, acompanhamento e gestão de solicitações públicas (como buracos em vias, iluminação e saneamento), conectando cidadãos e gestores públicos.
+Bem-vindos ao repositório do app mobile da Plataforma de Gestão de Demandas Urbanas! Este projeto é o cliente **mobile** (Expo / React Native) do mesmo produto ResolveAí cuja versão web centraliza o registro, acompanhamento e gestão de solicitações públicas (como buracos em vias, iluminação e saneamento), conectando cidadãos e gestores públicos.
 
 Este repositório contém apenas o front-end mobile. Ele consome a **mesma API** (Flask) utilizada pela aplicação web — o back-end é compartilhado entre os dois clientes e deve ser executado a partir do seu próprio repositório.
 
@@ -20,7 +20,7 @@ Siga os passos abaixo para configurar o ambiente de desenvolvimento na sua máqu
 * Node.js (v24.14.0)
 * Aplicativo **Expo Go** no celular (Android/iOS) — ou emulador Android / simulador iOS configurado
 * Git instalado
-* Back-end Flask da Smart City rodando (localmente ou em um ambiente acessível pelo dispositivo/emulador)
+* Back-end Flask da ResolveAí rodando (localmente ou em um ambiente acessível pelo dispositivo/emulador)
 
 ### 2.2 Configuração do App
 

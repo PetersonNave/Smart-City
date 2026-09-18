@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 export default function App() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Smart City</Text>
+      <Text style={styles.title}>ResolveAí</Text>
       <Text style={styles.subtitle}>Gestão de Demandas Urbanas</Text>
       <StatusBar style="auto" />
     </View>
