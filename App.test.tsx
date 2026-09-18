@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react-native';
+import { render, screen, waitFor } from '@testing-library/react-native';
 
 jest.mock('expo-font', () => ({
   useFonts: () => [true, null],
@@ -9,16 +9,16 @@ jest.mock('expo-splash-screen', () => ({
   hideAsync: jest.fn(),
 }));
 
-jest.mock('./src/theme', () => ({
-  colors: { navy: '#000' },
-  fontAssets: {},
-  fonts: { inter: { extraBold: 'test', medium: 'test' } },
-}));
+jest.mock('./src/auth/storage');
 
+import { getStoredTokens } from './src/auth/storage';
 import App from './App';
 
 describe('App', () => {
-  it('renders without crashing once fonts are loaded', () => {
-    expect(() => render(<App />)).not.toThrow();
+  it('boots to the auth stack when there is no stored session', async () => {
+    (getStoredTokens as jest.Mock).mockResolvedValue(null);
+    render(<App />);
+
+    await waitFor(() => expect(screen.getByText('Login')).toBeTruthy());
   });
 });
