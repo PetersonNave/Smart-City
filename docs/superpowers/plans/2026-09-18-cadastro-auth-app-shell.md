@@ -1033,11 +1033,19 @@ module.exports = function (api) {
 
 - [ ] **Step 3: Register Reanimated's Jest setup**
 
-In `package.json`, extend the `"jest"` block added in Task 1:
+> **Note (updated post-Task 5 by a controller ruling):** Task 5's fix round added
+> a `jest.setup.js` at the repo root (console.error suppression for a known
+> `@testing-library/react-native` `act()`-warning quirk) registered under
+> **`setupFilesAfterEnv`**, a different key from the one this step uses. There is
+> no collision — just add `setupFiles` as a new key alongside the existing
+> `setupFilesAfterEnv` entry; don't touch `setupFilesAfterEnv`.
+
+In `package.json`, extend the `"jest"` block (add the `setupFiles` key; keep the existing `setupFilesAfterEnv` key untouched):
 
 ```json
 "jest": {
   "preset": "jest-expo",
+  "setupFilesAfterEnv": ["<rootDir>/jest.setup.js"],
   "setupFiles": ["react-native-reanimated/jestSetup"]
 }
 ```
