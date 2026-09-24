@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { obterDemanda, type Demanda } from '../../api/demandas';
+import { useAuth } from '../../auth/AuthContext';
 import { Button } from '../../components/Button';
 import { DemandThumb } from '../../components/DemandThumb';
 import { GradientBackground } from '../../components/GradientBackground';
@@ -10,20 +11,23 @@ import { Loading } from '../../components/Loading';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusBadge } from '../../components/StatusBadge';
 import { useTabBarInset } from '../../components/TabBar';
-import { CATEGORIA_LABELS, STATUS_META, formatarData, formatarProtocolo } from '../../domain/demanda';
+import { Toast } from '../../components/Toast';
+import { CATEGORIA_LABELS, STATUS_META, formatarData, formatarProtocolo, podeEditar } from '../../domain/demanda';
 import type { DemandasStackScreenProps } from '../../navigation/types';
 import { colors, fonts, palette } from '../../theme';
 
 type Props = DemandasStackScreenProps<'DemandaDetalhe'>;
 
-// Figma "Detalhe da Demanda" (sem o botão "Editar Demanda", fora do escopo desta entrega).
+// Figma "Detalhe da Demanda" e o estado após editar ("Demanda atualizada com sucesso!").
 export function DemandaDetalheScreen({ navigation, route }: Props) {
-  const { id } = route.params;
+  const { id, feedback } = route.params;
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const tabBarInset = useTabBarInset();
   const [demanda, setDemanda] = useState<Demanda | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [toast, setToast] = useState<{ message: string; tone: 'success' | 'warning' } | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -34,9 +38,21 @@ export function DemandaDetalheScreen({ navigation, route }: Props) {
     }
   }, [id]);
 
+  // `feedback.at` muda a cada edição salva: recarrega e mostra o resultado.
   useEffect(() => {
     load();
-  }, [load]);
+  }, [load, feedback?.at]);
+
+  useEffect(() => {
+    if (!feedback) return;
+    setToast(
+      feedback.fotoFalhou
+        ? { message: 'Demanda atualizada, mas a foto não pôde ser enviada.', tone: 'warning' }
+        : { message: 'Demanda atualizada com sucesso!', tone: 'success' }
+    );
+  }, [feedback]);
+
+  const hideToast = useCallback(() => setToast(null), []);
 
   // O gestor pode mudar o status a qualquer momento: puxar para baixo busca a versão atual.
   async function handleRefresh() {
@@ -55,6 +71,10 @@ export function DemandaDetalheScreen({ navigation, route }: Props) {
   return (
     <GradientBackground variant="screen" style={{ paddingTop: insets.top }}>
       <ScreenHeader title="Detalhe da Demanda" onBack={goBack} testID="detalhe-header" />
+
+      <View style={styles.feedback}>
+        <Toast message={toast?.message ?? null} tone={toast?.tone} onHide={hideToast} testID="detalhe-toast" />
+      </View>
 
       {!demanda && !error && (
         <View style={styles.centered}>
@@ -83,7 +103,13 @@ export function DemandaDetalheScreen({ navigation, route }: Props) {
               <StatusBadge status={demanda.status} size="md" />
             </View>
 
-            <DemandThumb category={demanda.category} iconSize={56} style={styles.photo} />
+            <DemandThumb
+              category={demanda.category}
+              photoUrl={demanda.photoUrl}
+              iconSize={56}
+              style={styles.photo}
+              testID="detalhe-foto"
+            />
 
             <View style={styles.divider} />
 
@@ -93,7 +119,9 @@ export function DemandaDetalheScreen({ navigation, route }: Props) {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Localização</Text>
+              <Text style={styles.sectionLabel}>
+                {feedback?.localizacaoAtualizada ? 'Localização (atualizada)' : 'Localização'}
+              </Text>
               <View style={styles.locationRow}>
                 <Icon name="map" size={14} color={colors.primary} />
                 <Text style={styles.location}>{demanda.location}</Text>
@@ -115,6 +143,18 @@ export function DemandaDetalheScreen({ navigation, route }: Props) {
               </View>
             </View>
           </View>
+
+          {podeEditar(demanda, user) && (
+            <Button
+              label="Editar Demanda"
+              icon="pencil"
+              variant="outline"
+              radius={15}
+              onPress={() => navigation.navigate('EditarDemanda', { id: demanda.id })}
+              style={styles.editButton}
+              testID="detalhe-editar"
+            />
+          )}
         </ScrollView>
       )}
     </GradientBackground>
@@ -174,7 +214,14 @@ const styles = StyleSheet.create({
   },
   photo: {
     width: '100%',
-    height: 160,
+    height: 180,
+  },
+  feedback: {
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  editButton: {
+    marginTop: 16,
   },
   divider: {
     height: 1,

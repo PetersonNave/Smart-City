@@ -59,3 +59,12 @@ export function podeExcluir(demanda: Pick<Demanda, 'status'>, user: Pick<AuthUse
   if (user?.role === 'gestor') return true;
   return demanda.status === 'PENDING';
 }
+
+/**
+ * Regra do backend (DemandaService._garantir_pode_editar), vale para dados e foto:
+ * gestor edita qualquer demanda; cidadão só as próprias enquanto estão pendentes.
+ * (A lista/detalhe do cidadão já só traz as próprias demandas.)
+ */
+export function podeEditar(demanda: Pick<Demanda, 'status'>, user: Pick<AuthUser, 'role'> | null): boolean {
+  return podeExcluir(demanda, user);
+}

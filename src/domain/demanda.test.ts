@@ -1,4 +1,4 @@
-import { formatarData, formatarProtocolo, podeExcluir } from './demanda';
+import { formatarData, formatarProtocolo, podeEditar, podeExcluir } from './demanda';
 
 describe('demanda helpers', () => {
   it('formats the API date (UTC without offset) as dd/mm/yyyy', () => {
@@ -21,5 +21,11 @@ describe('demanda helpers', () => {
     expect(podeExcluir({ status: 'PENDING' }, cidadao)).toBe(true);
     expect(podeExcluir({ status: 'IN_PROGRESS' }, cidadao)).toBe(false);
     expect(podeExcluir({ status: 'RESOLVED' }, gestor)).toBe(true);
+  });
+
+  it('lets citizens edit only pending demands, and managers edit any', () => {
+    expect(podeEditar({ status: 'PENDING' }, { role: 'cidadao' })).toBe(true);
+    expect(podeEditar({ status: 'RESOLVED' }, { role: 'cidadao' })).toBe(false);
+    expect(podeEditar({ status: 'IN_PROGRESS' }, { role: 'gestor' })).toBe(true);
   });
 });

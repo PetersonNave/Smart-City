@@ -108,6 +108,8 @@ A documentação completa da API (compartilhada com a aplicação web) pode ser 
 | `GET` | `/api/demandas/{id}` | Retorna os detalhes de uma demanda específica |
 | `PATCH` | `/api/demandas/{id}` | Atualiza status ou prioridade da demanda |
 | `DELETE` | `/api/demandas/{id}` | Remove uma demanda (respeitando regras de role) |
+| `PUT` | `/api/demandas/{id}/foto` | Envia/substitui a foto da demanda (`multipart/form-data`, campo `foto`) |
+| `GET` | `/api/demandas/fotos/{arquivo}` | Imagem da demanda (use o `photoUrl` retornado) |
 
 ---
 

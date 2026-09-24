@@ -8,14 +8,23 @@ import type { Demanda } from '../api/demandas';
 //  ├─ Tabs ─┬─ Inicio
 //  │        ├─ Mapa
 //  │        ├─ Demandas (stack) ─┬─ DemandasLista
-//  │        │                    └─ DemandaDetalhe
+//  │        │                    ├─ DemandaDetalhe
+//  │        │                    └─ EditarDemanda (com tab bar, como no Figma)
 //  │        └─ Perfil
 //  ├─ NovaDemanda
 //  └─ DemandaEnviada
 
+/** Resultado da edição, mostrado como toast no detalhe (`at` força o recarregamento). */
+export type DemandaEditFeedback = {
+  at: number;
+  localizacaoAtualizada: boolean;
+  fotoFalhou: boolean;
+};
+
 export type DemandasStackParamList = {
   DemandasLista: undefined;
-  DemandaDetalhe: { id: number };
+  DemandaDetalhe: { id: number; feedback?: DemandaEditFeedback };
+  EditarDemanda: { id: number };
 };
 
 export type AppTabsParamList = {

@@ -25,6 +25,8 @@ export type ButtonProps = {
   icon?: IconName;
   disabled?: boolean;
   loading?: boolean;
+  /** Sobrescreve o raio da variante (ex.: 15 nos botões da tela "Editar Demanda"). */
+  radius?: number;
   style?: StyleProp<ViewStyle>;
   testID?: string;
 };
@@ -76,6 +78,7 @@ export function Button({
   icon,
   disabled = false,
   loading = false,
+  radius,
   style,
   testID,
 }: ButtonProps) {
@@ -103,7 +106,12 @@ export function Button({
         onPressOut={() => {
           scale.value = withTiming(1, { duration: 100 });
         }}
-        style={[styles.base, variantStyle.container, !isInteractive && styles.disabled]}
+        style={[
+          styles.base,
+          variantStyle.container,
+          radius !== undefined && { borderRadius: radius },
+          !isInteractive && styles.disabled,
+        ]}
       >
         {loading ? (
           <Loading size="small" color={variantStyle.content} />

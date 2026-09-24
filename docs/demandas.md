@@ -7,7 +7,8 @@ AppStack
  ├─ Tabs ─┬─ Início           (atalho "Registrar nova demanda")
  │        ├─ Mapa             (placeholder)
  │        ├─ Demandas (stack) ─┬─ DemandasLista
- │        │                    └─ DemandaDetalhe
+ │        │                    ├─ DemandaDetalhe
+ │        │                    └─ EditarDemanda   (com tab bar, como no Figma)
  │        └─ Perfil           (placeholder)
  ├─ NovaDemanda               (sem tab bar, como no Figma)
  └─ DemandaEnviada
@@ -22,7 +23,8 @@ rola deve reservar `useTabBarInset()` de espaço embaixo.
   gestor vê todas (o título muda para "Analisar Demandas" no caso do gestor).
 - Recarrega ao voltar o foco para a aba (ex.: depois de criar uma demanda), tem
   pull-to-refresh e carrega a próxima página ao chegar no fim da lista.
-- Tocar no card expande categoria + descrição. O link do card expandido abre o detalhe.
+- Cada card mostra a foto da demanda (ou o ícone da categoria, se não houver foto ou ela
+  não carregar). Tocar no card expande categoria + descrição; o link expandido abre o detalhe.
 - Lixeira: aparece só quando o backend permitiria excluir (`podeExcluir`: cidadão só
   exclui demanda pendente; gestor exclui qualquer uma). Confirma no modal e mostra o toast
   "Demanda excluída com sucesso!".
@@ -30,27 +32,54 @@ rola deve reservar `useTabBarInset()` de espaço embaixo.
 
 ## Detalhe (`DemandaDetalheScreen`)
 
-- `GET /api/demandas/{id}`: título, status, descrição, localização, protocolo, categoria,
-  data de registro e status atual.
+- `GET /api/demandas/{id}`: foto, título, status, descrição, localização, protocolo,
+  categoria, data de registro e status atual. Pull-to-refresh busca o status atual.
+- Botão "Editar Demanda" só aparece quando o backend permitiria editar (`podeEditar`:
+  cidadão só edita a própria demanda enquanto pendente; gestor edita qualquer uma).
+- Ao voltar da edição mostra "Demanda atualizada com sucesso!" e, se o endereço mudou,
+  o rótulo "Localização (atualizada)" — como no frame do Figma.
 
 ## Nova demanda (`NovaDemandaScreen`) → Demanda enviada
 
-- Campos: foto, título, categoria, descrição e localização (preenchida pelo GPS com
-  reverse geocoding; se a permissão for negada, o usuário digita o endereço).
-- Validação (`NovaDemandaScreen.schema.ts`) usa os mesmos limites do `DemandaCreateSchema`
-  do backend. Erros 422 da API (ex.: título duplicado) voltam para o campo certo.
-- Envio: `POST /api/demandas` com `{ titulo, descricao, categoria, localizacao, prioridade }`.
+- Campos (`DemandaFormFields`, compartilhado com a edição): foto, título, categoria,
+  descrição e localização (preenchida pelo GPS com reverse geocoding; se a permissão for
+  negada, o usuário digita o endereço).
+- Validação (`demandaForm.schema.ts`) usa os mesmos limites do backend. Erros 422 da API
+  (ex.: título duplicado) voltam para o campo certo.
+- Envio em duas etapas: `POST /api/demandas` com `{ titulo, descricao, categoria,
+  localizacao, prioridade }` e depois `PUT /api/demandas/{id}/foto` (multipart, campo
+  `foto`). Se só a foto falhar, a demanda já existe: a confirmação avisa que a foto pode
+  ser adicionada em "Editar Demanda".
 - A tela seguinte mostra o protocolo `#<ano>-<id com 5 dígitos>`, com atalhos para o
   detalhe e para o Início.
+- Sair com o formulário preenchido pede confirmação ("Descartar demanda?").
+
+## Editar demanda (`EditarDemandaScreen`)
+
+- Carrega a demanda atual e preenche o formulário, com a foto atual e o selo "Alterar foto".
+- "Atualizar" envia `PATCH /api/demandas/{id}` **só com os campos alterados** e, se uma foto
+  nova foi escolhida, `PUT /api/demandas/{id}/foto`. Depois volta ao detalhe (`popTo`).
+- Localização não é sobrescrita pelo GPS automaticamente: o link "Usar minha localização
+  atual" busca o endereço quando o usuário pedir.
+- Se só a foto mudou e o upload falhar, o erro aparece na própria tela. Se os dados foram
+  salvos mas a foto falhou, o detalhe mostra um aviso em âmbar.
+- Se a demanda saiu de pendente (ex.: o gestor já começou a analisar), a tela avisa que não
+  pode mais ser editada. "Cancelar"/voltar com alterações pede "Descartar alterações?".
+
+## Fotos no backend
+
+- Salvas em `backend/uploads/demandas/` (fora do git; configurável por `UPLOAD_FOLDER`),
+  com nome aleatório. JPG, PNG, WEBP ou HEIC até 8 MB, validados pelo conteúdo do arquivo.
+- As demandas trazem `photoUrl` (URL absoluta com o host usado na requisição — no celular,
+  o IP configurado em `EXPO_PUBLIC_API_URL`).
 
 ## Diferenças conscientes em relação ao Figma
 
 | Figma | App | Motivo |
 | :--- | :--- | :--- |
-| Foto real na miniatura/detalhe | Ícone da categoria | A API não armazena foto (não há campo no `DemandaCreateSchema`). A foto é exigida no formulário, mas **não é enviada** até o backend suportar upload. |
 | Formulário sem campo "Título" | Campo "Título" adicionado | `titulo` é obrigatório e único no backend (5 a 120 caracteres). |
 | Sem escolha de prioridade | Envia `prioridade: 'media'` | Obrigatória no backend; a triagem fica com o gestor. |
 | Categorias "Infraestrutura Urbana" etc. | Categorias do backend (`ROAD_MAINTENANCE`, `PUBLIC_LIGHTING`...) com rótulos em PT | O backend só aceita esses valores. |
 | "Toque para ver rota de atendimento no mapa" | "Toque para ver os detalhes da demanda" | A aba Mapa ainda é placeholder. |
-| Botão "Editar Demanda" no detalhe | Não implementado | Fora do escopo desta entrega (o frame "Editar Demanda" existe no Figma). |
 | Botão voltar na lista | Oculto na raiz da aba | Não há para onde voltar na raiz de uma aba. |
+| Demanda sem foto | Ícone da categoria no lugar da foto | Demandas criadas antes do upload existir (ou cuja foto falhou) não têm imagem. |
