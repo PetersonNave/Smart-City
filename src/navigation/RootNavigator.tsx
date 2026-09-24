@@ -1,7 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../auth/AuthContext';
 import { LoadingScreen } from '../screens/LoadingScreen';
-import { AppTabs } from './AppTabs';
+import { AppStack } from './AppStack';
 import { AuthStack } from './AuthStack';
 
 const Stack = createNativeStackNavigator();
@@ -13,7 +13,7 @@ export function RootNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {status === 'bootstrapping' && <Stack.Screen name="Loading" component={LoadingScreen} />}
       {status === 'guest' && <Stack.Screen name="Auth" component={AuthStack} />}
-      {status === 'authenticated' && <Stack.Screen name="App" component={AppTabs} />}
+      {status === 'authenticated' && <Stack.Screen name="App" component={AppStack} />}
     </Stack.Navigator>
   );
 }

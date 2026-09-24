@@ -1,15 +1,12 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Icon, type IconName } from '../components/Icon';
+import type { IconName } from '../components/Icon';
+import { TabBar } from '../components/TabBar';
 import { HomeScreen } from '../screens/home/HomeScreen';
 import { PlaceholderScreen } from '../screens/home/PlaceholderScreen';
-import { colors } from '../theme';
+import { DemandasStack } from './DemandasStack';
+import type { AppTabsParamList } from './types';
 
-export type AppTabsParamList = {
-  Inicio: undefined;
-  Mapa: undefined;
-  Demandas: undefined;
-  Perfil: undefined;
-};
+export type { AppTabsParamList } from './types';
 
 const Tab = createBottomTabNavigator<AppTabsParamList>();
 
@@ -20,28 +17,24 @@ const TAB_ICONS: Record<keyof AppTabsParamList, IconName> = {
   Perfil: 'profile',
 };
 
+function MapaScreen() {
+  return <PlaceholderScreen title="Mapa" />;
+}
+
+function PerfilScreen() {
+  return <PlaceholderScreen title="Perfil" />;
+}
+
 export function AppTabs() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: '#90A4AE',
-        tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-          <Icon name={TAB_ICONS[route.name]} color={color} size={size} />
-        ),
-      })}
+      tabBar={(props) => <TabBar {...props} icons={TAB_ICONS} />}
+      screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="Inicio" component={HomeScreen} options={{ title: 'Início' }} />
-      <Tab.Screen name="Mapa" options={{ title: 'Mapa' }}>
-        {() => <PlaceholderScreen title="Mapa" />}
-      </Tab.Screen>
-      <Tab.Screen name="Demandas" options={{ title: 'Demandas' }}>
-        {() => <PlaceholderScreen title="Demandas" />}
-      </Tab.Screen>
-      <Tab.Screen name="Perfil" options={{ title: 'Perfil' }}>
-        {() => <PlaceholderScreen title="Perfil" />}
-      </Tab.Screen>
+      <Tab.Screen name="Mapa" component={MapaScreen} options={{ title: 'Mapa' }} />
+      <Tab.Screen name="Demandas" component={DemandasStack} options={{ title: 'Demandas' }} />
+      <Tab.Screen name="Perfil" component={PerfilScreen} options={{ title: 'Perfil' }} />
     </Tab.Navigator>
   );
 }

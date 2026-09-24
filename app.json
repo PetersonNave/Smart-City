@@ -26,7 +26,20 @@
       "expo-secure-store",
       "expo-asset",
       "expo-splash-screen",
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O ResolveAí usa suas fotos para anexar imagens às demandas registradas.",
+          "cameraPermission": "O ResolveAí usa a câmera para fotografar o problema que você está registrando."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "O ResolveAí usa sua localização para preencher o endereço da demanda automaticamente."
+        }
+      ]
     ]
   }
 }

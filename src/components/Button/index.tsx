@@ -1,30 +1,82 @@
-import { Pressable, StyleSheet, Text, type GestureResponderEvent } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  type GestureResponderEvent,
+  type StyleProp,
+  type TextStyle,
+  type ViewStyle,
+} from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { colors, fonts } from '../../theme';
+import { colors, fonts, palette } from '../../theme';
+import { Icon, type IconName } from '../Icon';
 import { Loading } from '../Loading';
 
-export type ButtonVariant = 'primary' | 'secondary';
+// - primary / secondary: botões pill cheios (telas de autenticação).
+// - surface: branco com borda verde, raio 15, 55px (Figma "Nova demanda" / "Demanda enviada").
+// - outline: branco com borda teal de 2px (Figma "Cancelar" / "Editar Demanda").
+// - danger: vermelho cheio (Figma "Excluir").
+export type ButtonVariant = 'primary' | 'secondary' | 'surface' | 'outline' | 'danger';
 
 export type ButtonProps = {
   label: string;
   onPress: (event: GestureResponderEvent) => void;
   variant?: ButtonVariant;
+  icon?: IconName;
   disabled?: boolean;
   loading?: boolean;
+  style?: StyleProp<ViewStyle>;
   testID?: string;
 };
 
-const variantColors: Record<ButtonVariant, string> = {
-  primary: colors.primary,
-  secondary: colors.secondary,
+const VARIANT_STYLES: Record<ButtonVariant, { container: ViewStyle; label: TextStyle; content: string }> = {
+  primary: {
+    container: { backgroundColor: colors.primary, borderRadius: 50, minHeight: 48 },
+    label: { fontFamily: fonts.inter.bold, color: palette.white },
+    content: palette.white,
+  },
+  secondary: {
+    container: { backgroundColor: colors.secondary, borderRadius: 50, minHeight: 48 },
+    label: { fontFamily: fonts.inter.bold, color: palette.white },
+    content: palette.white,
+  },
+  surface: {
+    container: {
+      backgroundColor: palette.white,
+      borderColor: colors.secondary,
+      borderWidth: 1,
+      borderRadius: 15,
+      minHeight: 55,
+    },
+    label: { fontFamily: fonts.inter.extraBold, color: colors.primary },
+    content: colors.primary,
+  },
+  outline: {
+    container: {
+      backgroundColor: palette.white,
+      borderColor: colors.primary,
+      borderWidth: 2,
+      borderRadius: 12,
+      minHeight: 50,
+    },
+    label: { fontFamily: fonts.inter.extraBold, color: colors.primary },
+    content: colors.primary,
+  },
+  danger: {
+    container: { backgroundColor: palette.danger, borderRadius: 12, minHeight: 50 },
+    label: { fontFamily: fonts.inter.extraBold, color: palette.white },
+    content: palette.white,
+  },
 };
 
 export function Button({
   label,
   onPress,
   variant = 'primary',
+  icon,
   disabled = false,
   loading = false,
+  style,
   testID,
 }: ButtonProps) {
   const scale = useSharedValue(1);
@@ -32,13 +84,17 @@ export function Button({
     transform: [{ scale: scale.value }],
   }));
   const isInteractive = !disabled && !loading;
+  const variantStyle = VARIANT_STYLES[variant];
 
   return (
-    <Animated.View style={animatedStyle}>
+    <Animated.View style={[styles.wrapper, animatedStyle, style]}>
       <Pressable
         testID={testID}
         onPress={isInteractive ? onPress : undefined}
         disabled={!isInteractive}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityState={{ disabled: !isInteractive, busy: loading }}
         onPressIn={() => {
           if (isInteractive) {
             scale.value = withTiming(0.96, { duration: 100 });
@@ -47,22 +103,28 @@ export function Button({
         onPressOut={() => {
           scale.value = withTiming(1, { duration: 100 });
         }}
-        style={[
-          styles.base,
-          { backgroundColor: variantColors[variant] },
-          !isInteractive && styles.disabled,
-        ]}
+        style={[styles.base, variantStyle.container, !isInteractive && styles.disabled]}
       >
-        {loading ? <Loading size="small" color="#fff" /> : <Text style={styles.label}>{label}</Text>}
+        {loading ? (
+          <Loading size="small" color={variantStyle.content} />
+        ) : (
+          <>
+            {icon && <Icon name={icon} size={20} color={variantStyle.content} />}
+            <Text style={[styles.label, variantStyle.label]}>{label}</Text>
+          </>
+        )}
       </Pressable>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    width: '100%',
+  },
   base: {
-    minHeight: 48,
-    borderRadius: 50,
+    flexDirection: 'row',
+    gap: 10,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
@@ -72,8 +134,6 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   label: {
-    fontFamily: fonts.inter.bold,
     fontSize: 16,
-    color: '#fff',
   },
 });
