@@ -10,8 +10,6 @@ jest.mock('expo-linear-gradient', () => ({
 }));
 
 import { GradientBackground } from './index';
-import { colors } from '../../theme';
-
 describe('GradientBackground', () => {
   it('renders its children', () => {
     const { getByText } = render(
@@ -22,8 +20,20 @@ describe('GradientBackground', () => {
     expect(getByText('Oi')).toBeTruthy();
   });
 
-  it('uses the brand gradient colors in order', () => {
+  it('uses the Figma brand gradient (green → teal → navy at 90%) by default', () => {
     const { getByTestId } = render(<GradientBackground testID="gradient" />);
-    expect(getByTestId('gradient').props.colors).toEqual([colors.secondary, colors.primary, colors.navy]);
+    expect(getByTestId('gradient').props.colors).toEqual([
+      'rgba(86, 197, 150, 0.9)',
+      'rgba(50, 157, 156, 0.9)',
+      'rgba(32, 80, 114, 0.9)',
+    ]);
+  });
+
+  it('uses the teal → green gradient for the screen variant', () => {
+    const { getByTestId } = render(<GradientBackground variant="screen" testID="gradient" />);
+    expect(getByTestId('gradient').props.colors).toEqual([
+      'rgba(50, 157, 156, 0.9)',
+      'rgba(86, 197, 150, 0.9)',
+    ]);
   });
 });

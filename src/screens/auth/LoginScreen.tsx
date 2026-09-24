@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../../navigation/AuthStack';
-import { GradientBackground } from '../../components/GradientBackground';
+import { AuthLayout } from '../../components/AuthLayout';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
 import { useAuth } from '../../auth/AuthContext';
-import { colors, fonts } from '../../theme';
+import { colors, fonts, palette } from '../../theme';
 import { loginSchema, type LoginFormValues } from './LoginScreen.schema';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
@@ -36,79 +36,88 @@ export function LoginScreen({ navigation }: Props) {
   }
 
   return (
-    <GradientBackground style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+    <AuthLayout title="Login">
+      <View style={styles.fields}>
+        <Controller
+          control={control}
+          name="email"
+          render={({ field }) => (
+            <TextField
+              placeholder="Email"
+              icon="mail"
+              keyboardType="email-address"
+              value={field.value}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              error={errors.email?.message}
+              testID="login-email"
+            />
+          )}
+        />
 
-      <Controller
-        control={control}
-        name="email"
-        render={({ field }) => (
-          <TextField
-            label="Email"
-            icon="mail"
-            keyboardType="email-address"
-            value={field.value}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
-            error={errors.email?.message}
-            testID="login-email"
-          />
-        )}
-      />
-
-      <Controller
-        control={control}
-        name="password"
-        render={({ field }) => (
-          <TextField
-            label="Senha"
-            icon="lock"
-            secureTextEntry
-            value={field.value}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
-            error={errors.password?.message}
-            testID="login-password"
-          />
-        )}
-      />
+        <Controller
+          control={control}
+          name="password"
+          render={({ field }) => (
+            <TextField
+              placeholder="Senha"
+              icon="lock"
+              secureTextEntry
+              value={field.value}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              error={errors.password?.message}
+              testID="login-password"
+            />
+          )}
+        />
+      </View>
 
       {submitError && <Text style={styles.error}>{submitError}</Text>}
 
-      <Button
-        label="Entrar"
-        loading={isSubmitting}
-        onPress={handleSubmit(onSubmit)}
-        testID="login-submit"
-      />
+      <View style={styles.actions}>
+        <Button
+          label="Entrar"
+          loading={isSubmitting}
+          onPress={handleSubmit(onSubmit)}
+          testID="login-submit"
+        />
 
-      <Pressable testID="go-to-cadastro" onPress={() => navigation.navigate('Cadastro')}>
-        <Text style={styles.link}>Não tem conta? Cadastre-se</Text>
-      </Pressable>
-    </GradientBackground>
+        <Pressable testID="go-to-cadastro" hitSlop={8} onPress={() => navigation.navigate('Cadastro')}>
+          <Text style={styles.link}>
+            Não tem conta? <Text style={styles.linkStrong}>Cadastre-se</Text>
+          </Text>
+        </Pressable>
+      </View>
+    </AuthLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-    gap: 16,
-  },
-  title: {
-    fontFamily: fonts.inter.extraBold,
-    fontSize: 36,
-    color: colors.navy,
+  fields: {
+    width: '100%',
+    gap: 44,
   },
   error: {
-    fontFamily: fonts.inter.medium,
+    fontFamily: fonts.inter.semiBold,
     fontSize: 14,
-    color: '#E53935',
+    color: palette.dangerStrong,
+    textAlign: 'center',
+    marginTop: 24,
+  },
+  actions: {
+    width: '100%',
+    alignItems: 'center',
+    gap: 20,
+    marginTop: 44,
   },
   link: {
     fontFamily: fonts.inter.medium,
     fontSize: 14,
-    color: '#fff',
+    color: colors.navy,
+  },
+  linkStrong: {
+    fontFamily: fonts.inter.extraBold,
+    color: colors.primary,
   },
 });

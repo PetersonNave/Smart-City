@@ -49,7 +49,33 @@ describe('TextField', () => {
 
     fireEvent(getByTestId('field-email-input'), 'focus');
 
-    expect(StyleSheet.flatten(getByTestId('field-email-field').props.style).borderColor).toBe('#E53935');
+    expect(StyleSheet.flatten(getByTestId('field-email-field').props.style).borderColor).toBe('#FF383C');
+  });
+
+  it('renders the placeholder inside the input and no label when label is omitted (Figma login)', () => {
+    const { getByTestId, queryByText } = render(
+      <TextField placeholder="Email" value="" onChangeText={jest.fn()} testID="field-email" />,
+    );
+
+    expect(getByTestId('field-email-input').props.placeholder).toBe('Email');
+    expect(queryByText('Email')).toBeNull();
+  });
+
+  it('renders the label above a card field and supports multiline', () => {
+    const { getByText, getByTestId } = render(
+      <TextField
+        variant="card"
+        label="Descrição"
+        placeholder="Descreva o problema encontrado"
+        multiline
+        value=""
+        onChangeText={jest.fn()}
+        testID="field-descricao"
+      />,
+    );
+
+    expect(getByText('Descrição')).toBeTruthy();
+    expect(getByTestId('field-descricao-input').props.multiline).toBe(true);
   });
 
   it('toggles password visibility for secureTextEntry fields', () => {
