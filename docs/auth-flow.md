@@ -26,6 +26,14 @@
   única vez** (flag `_retry` evita loop), usando o refresh token salvo. Se funcionar,
   salva os novos tokens (o backend rotaciona o refresh token a cada uso) e repete a
   requisição original.
+- Existe **no máximo um refresh em andamento**: se várias requisições recebem 401 ao
+  mesmo tempo, todas esperam o mesmo refresh e repetem com o token novo. Sem isso, como
+  o refresh token é rotativo, a segunda chamada de refresh usaria um token já invalidado
+  e deslogaria o usuário. Uma requisição cujo token já foi renovado por outra só repete.
+- 401 em `/auth/login`, `/auth/register` e `/auth/refresh` não dispara refresh (é
+  credencial errada, não sessão expirada).
+- Toda requisição tem timeout de 15s (`REQUEST_TIMEOUT_MS`), para não ficar carregando
+  para sempre se a URL da API estiver inacessível.
 - Se o refresh falhar (token expirado/inválido/já usado), os tokens são apagados do
   SecureStore e `AuthContext` é notificado via `setOnRefreshFailure` — o app volta pro
   fluxo de Login em qualquer tela, não só no boot.
