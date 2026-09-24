@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { Pressable, StyleSheet, Text, View, type TextInput } from 'react-native';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Controller, useForm } from 'react-hook-form';
@@ -18,6 +18,9 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Cadastro'>;
 export function CadastroScreen({ navigation }: Props) {
   const { register } = useAuth();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
+  const confirmPasswordRef = useRef<TextInput>(null);
   const {
     control,
     handleSubmit,
@@ -57,6 +60,10 @@ export function CadastroScreen({ navigation }: Props) {
             <TextField
               placeholder="Nome de usuário"
               icon="profile"
+              autoComplete="username-new"
+              textContentType="username"
+              returnKeyType="next"
+              onSubmitEditing={() => emailRef.current?.focus()}
               value={field.value}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
@@ -71,9 +78,14 @@ export function CadastroScreen({ navigation }: Props) {
           name="email"
           render={({ field }) => (
             <TextField
+              ref={emailRef}
               placeholder="Email"
               icon="mail"
               keyboardType="email-address"
+              autoComplete="email"
+              textContentType="emailAddress"
+              returnKeyType="next"
+              onSubmitEditing={() => passwordRef.current?.focus()}
               value={field.value}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
@@ -88,9 +100,14 @@ export function CadastroScreen({ navigation }: Props) {
           name="password"
           render={({ field }) => (
             <TextField
+              ref={passwordRef}
               placeholder="Senha"
               icon="lock"
               secureTextEntry
+              autoComplete="new-password"
+              textContentType="newPassword"
+              returnKeyType="next"
+              onSubmitEditing={() => confirmPasswordRef.current?.focus()}
               value={field.value}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
@@ -105,9 +122,14 @@ export function CadastroScreen({ navigation }: Props) {
           name="confirmPassword"
           render={({ field }) => (
             <TextField
+              ref={confirmPasswordRef}
               placeholder="Confirmar senha"
               icon="lock"
               secureTextEntry
+              autoComplete="new-password"
+              textContentType="newPassword"
+              returnKeyType="go"
+              onSubmitEditing={handleSubmit(onSubmit)}
               value={field.value}
               onChangeText={field.onChange}
               onBlur={field.onBlur}

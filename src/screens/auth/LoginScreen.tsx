@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { Pressable, StyleSheet, Text, View, type TextInput } from 'react-native';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -16,6 +16,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 export function LoginScreen({ navigation }: Props) {
   const { login } = useAuth();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const passwordRef = useRef<TextInput>(null);
   const {
     control,
     handleSubmit,
@@ -46,6 +47,10 @@ export function LoginScreen({ navigation }: Props) {
               placeholder="Email"
               icon="mail"
               keyboardType="email-address"
+              autoComplete="email"
+              textContentType="emailAddress"
+              returnKeyType="next"
+              onSubmitEditing={() => passwordRef.current?.focus()}
               value={field.value}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
@@ -60,9 +65,14 @@ export function LoginScreen({ navigation }: Props) {
           name="password"
           render={({ field }) => (
             <TextField
+              ref={passwordRef}
               placeholder="Senha"
               icon="lock"
               secureTextEntry
+              autoComplete="current-password"
+              textContentType="password"
+              returnKeyType="go"
+              onSubmitEditing={handleSubmit(onSubmit)}
               value={field.value}
               onChangeText={field.onChange}
               onBlur={field.onBlur}

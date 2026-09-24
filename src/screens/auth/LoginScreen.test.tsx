@@ -59,4 +59,19 @@ describe('LoginScreen', () => {
 
     await waitFor(() => expect(screen.getByText('E-mail ou senha incorretos.')).toBeTruthy());
   });
+
+  it('submits from the keyboard "go" key on the password field, with autofill hints set', async () => {
+    const login = jest.fn().mockResolvedValue(undefined);
+    (useAuth as jest.Mock).mockReturnValue({ login });
+    renderScreen();
+
+    expect(screen.getByTestId('login-email-input').props.textContentType).toBe('emailAddress');
+    expect(screen.getByTestId('login-password-input').props.autoComplete).toBe('current-password');
+
+    fireEvent.changeText(screen.getByTestId('login-email-input'), 'test@example.com');
+    fireEvent.changeText(screen.getByTestId('login-password-input'), '123456');
+    fireEvent(screen.getByTestId('login-password-input'), 'submitEditing');
+
+    await waitFor(() => expect(login).toHaveBeenCalledWith('test@example.com', '123456'));
+  });
 });

@@ -6,6 +6,8 @@ import {
   TextInput,
   View,
   type KeyboardTypeOptions,
+  type ReturnKeyTypeOptions,
+  type TextInputProps,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -41,6 +43,14 @@ export type TextFieldProps = {
   secureTextEntry?: boolean;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   keyboardType?: KeyboardTypeOptions;
+  /** Tecla de ação do teclado (ex.: 'next' para ir ao próximo campo, 'go' para enviar). */
+  returnKeyType?: ReturnKeyTypeOptions;
+  onSubmitEditing?: () => void;
+  /** Preenchimento automático (gerenciador de senhas / chaveiro). */
+  autoComplete?: TextInputProps['autoComplete'];
+  textContentType?: TextInputProps['textContentType'];
+  /** React 19: ref como prop comum, aponta para o TextInput (ex.: focar o próximo campo). */
+  ref?: React.Ref<TextInput>;
   style?: StyleProp<ViewStyle>;
   testID?: string;
 };
@@ -59,6 +69,11 @@ export function TextField({
   secureTextEntry = false,
   autoCapitalize = 'none',
   keyboardType = 'default',
+  returnKeyType,
+  onSubmitEditing,
+  autoComplete,
+  textContentType,
+  ref,
   style,
   testID = 'field',
 }: TextFieldProps) {
@@ -84,6 +99,7 @@ export function TextField({
       >
         {icon && <Icon name={icon} size={isPill ? 24 : 20} color={isPill ? palette.inputIcon : colors.primary} />}
         <TextInput
+          ref={ref}
           testID={`${testID}-input`}
           value={value}
           placeholder={placeholder}
@@ -102,6 +118,12 @@ export function TextField({
           secureTextEntry={secureTextEntry && !isPasswordVisible}
           autoCapitalize={autoCapitalize}
           keyboardType={keyboardType}
+          returnKeyType={returnKeyType}
+          onSubmitEditing={onSubmitEditing}
+          // Com 'next', mantém o teclado aberto ao pular para o próximo campo.
+          submitBehavior={returnKeyType === 'next' ? 'submit' : undefined}
+          autoComplete={autoComplete}
+          textContentType={textContentType}
           style={[
             styles.input,
             isPill
