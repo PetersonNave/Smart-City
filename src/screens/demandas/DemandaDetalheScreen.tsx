@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { obterDemanda, type Demanda } from '../../api/demandas';
 import { Button } from '../../components/Button';
@@ -23,6 +23,7 @@ export function DemandaDetalheScreen({ navigation, route }: Props) {
   const tabBarInset = useTabBarInset();
   const [demanda, setDemanda] = useState<Demanda | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
@@ -36,6 +37,18 @@ export function DemandaDetalheScreen({ navigation, route }: Props) {
   useEffect(() => {
     load();
   }, [load]);
+
+  // O gestor pode mudar o status a qualquer momento: puxar para baixo busca a versão atual.
+  async function handleRefresh() {
+    setIsRefreshing(true);
+    try {
+      setDemanda(await obterDemanda(id));
+    } catch {
+      // Mantém os dados já exibidos; o erro de rede não deve apagar a tela.
+    } finally {
+      setIsRefreshing(false);
+    }
+  }
 
   const goBack = () => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate('DemandasLista'));
 
@@ -57,7 +70,13 @@ export function DemandaDetalheScreen({ navigation, route }: Props) {
       )}
 
       {demanda && !error && (
-        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: tabBarInset + 24 }]}>
+        <ScrollView
+          contentContainerStyle={[styles.content, { paddingBottom: tabBarInset + 24 }]}
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={palette.white} />
+          }
+          testID="detalhe-scroll"
+        >
           <View style={styles.card} testID="detalhe-card">
             <View style={styles.titleRow}>
               <Text style={styles.title}>{demanda.title}</Text>

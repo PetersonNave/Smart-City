@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { obterDemanda } from '../../api/demandas';
 import { DemandaDetalheScreen } from './DemandaDetalheScreen';
 
@@ -54,5 +54,22 @@ describe('DemandaDetalheScreen', () => {
     fireEvent.press(screen.getByTestId('detalhe-header-back'));
     expect(navigation.goBack).toHaveBeenCalled();
     await waitFor(() => expect(screen.getByTestId('detalhe-card')).toBeTruthy());
+  });
+
+  it('pull-to-refresh fetches the latest status', async () => {
+    (obterDemanda as jest.Mock)
+      .mockResolvedValueOnce(demanda)
+      .mockResolvedValueOnce({ ...demanda, status: 'IN_PROGRESS' });
+
+    renderScreen();
+    await waitFor(() => expect(screen.getAllByText('PENDENTE').length).toBeGreaterThan(0));
+
+    const { refreshControl } = screen.getByTestId('detalhe-scroll').props;
+    await act(async () => {
+      await refreshControl.props.onRefresh();
+    });
+
+    expect(screen.getAllByText('EM ANÁLISE').length).toBeGreaterThan(0);
+    expect(screen.queryByText('PENDENTE')).toBeNull();
   });
 });
