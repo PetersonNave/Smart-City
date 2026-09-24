@@ -79,4 +79,55 @@ describe('apiClient', () => {
 
     setOnRefreshFailure(null);
   });
+
+  it('shares a single refresh between concurrent 401s (the backend rotates refresh tokens)', async () => {
+    let stored = { accessToken: 'expired-access', refreshToken: 'refresh-1' };
+    (getStoredTokens as jest.Mock).mockImplementation(async () => stored);
+    (setStoredTokens as jest.Mock).mockImplementation(async (tokens) => {
+      stored = tokens;
+    });
+
+    mock.onGet(/\/api\/demandas.*/).reply((config) =>
+      config.headers?.Authorization === 'Bearer new-access'
+        ? [200, { data: {}, message: '', status_code: 200 }]
+        : [401, { data: null, message: 'Token expirado', status_code: 401 }]
+    );
+    let refreshCalls = 0;
+    refreshMock.onPost('/auth/refresh').reply((config) => {
+      refreshCalls += 1;
+      // Um refresh token já usado é recusado, como no backend.
+      return JSON.parse(config.data).refresh_token === 'refresh-1' && refreshCalls === 1
+        ? [200, { data: { access_token: 'new-access', refresh_token: 'refresh-2' }, message: '', status_code: 200 }]
+        : [401, { data: null, message: 'Refresh token já utilizado', status_code: 401 }];
+    });
+    const onFailure = jest.fn();
+    setOnRefreshFailure(onFailure);
+
+    const responses = await Promise.all([
+      apiClient.get('/api/demandas'),
+      apiClient.get('/api/demandas/1'),
+      apiClient.get('/api/demandas/2'),
+    ]);
+
+    expect(responses.map((response) => response.status)).toEqual([200, 200, 200]);
+    expect(refreshCalls).toBe(1);
+    expect(onFailure).not.toHaveBeenCalled();
+    setOnRefreshFailure(null);
+  });
+
+  it('does not try to refresh when the login itself returns 401 (wrong password)', async () => {
+    (getStoredTokens as jest.Mock).mockResolvedValue(null);
+    mock.onPost('/auth/login').reply(401, { data: null, message: 'E-mail ou senha incorretos.', status_code: 401 });
+    const onFailure = jest.fn();
+    setOnRefreshFailure(onFailure);
+
+    await expect(apiClient.post('/auth/login', {})).rejects.toMatchObject({ response: { status: 401 } });
+    expect(onFailure).not.toHaveBeenCalled();
+    expect(clearStoredTokens).not.toHaveBeenCalled();
+    setOnRefreshFailure(null);
+  });
+
+  it('gives up on requests that hang (timeout configured)', () => {
+    expect(apiClient.defaults.timeout).toBeGreaterThan(0);
+  });
 });

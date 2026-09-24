@@ -41,6 +41,7 @@ export async function unwrap<T>(promise: Promise<{ data: ApiEnvelope<T> }>): Pro
         throw new Error(envelope.message || 'Erro inesperado ao comunicar com o servidor');
       }
       if (!error.response) {
+        // Sem resposta = servidor inacessível ou timeout (ECONNABORTED / ETIMEDOUT).
         throw new Error(NETWORK_ERROR_MESSAGE);
       }
     }
