@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { usePreventRemove } from '@react-navigation/native';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ApiValidationError } from '../../api/envelope';
-import { criarDemanda, DEMANDA_CATEGORIAS, type DemandaCategoria } from '../../api/demandas';
+import { criarDemanda, DEMANDA_CATEGORIAS, type Demanda, type DemandaCategoria } from '../../api/demandas';
 import { Button } from '../../components/Button';
 import { GradientBackground } from '../../components/GradientBackground';
 import { Icon } from '../../components/Icon';
@@ -35,13 +36,14 @@ export function NovaDemandaScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const location = useCurrentAddress();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [created, setCreated] = useState<Demanda | null>(null);
   const {
     control,
     handleSubmit,
     setError,
     setValue,
     getValues,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<NovaDemandaFormValues>({
     resolver: zodResolver(novaDemandaSchema),
     defaultValues: { foto: '', titulo: '', categoria: '', descricao: '', localizacao: '' },
@@ -56,6 +58,19 @@ export function NovaDemandaScreen({ navigation }: Props) {
     }
   }, [location.status, location.address, getValues, setValue, errors.localizacao]);
 
+  // Voltar (botão, gesto ou botão físico do Android) com o formulário preenchido pede confirmação.
+  usePreventRemove(isDirty && !created, ({ data }) => {
+    Alert.alert('Descartar demanda?', 'As informações preenchidas serão perdidas.', [
+      { text: 'Continuar editando', style: 'cancel' },
+      { text: 'Descartar', style: 'destructive', onPress: () => navigation.dispatch(data.action) },
+    ]);
+  });
+
+  // Navega só depois do re-render com `created`, para o bloqueio acima já estar desligado.
+  useEffect(() => {
+    if (created) navigation.replace('DemandaEnviada', { demanda: created });
+  }, [created, navigation]);
+
   async function onSubmit(values: NovaDemandaFormValues) {
     setSubmitError(null);
     try {
@@ -69,7 +84,7 @@ export function NovaDemandaScreen({ navigation }: Props) {
         // Cidadão não escolhe prioridade no Figma; a triagem fica com o gestor.
         prioridade: 'media',
       });
-      navigation.replace('DemandaEnviada', { demanda });
+      setCreated(demanda);
     } catch (error) {
       if (error instanceof ApiValidationError) {
         let mappedAny = false;
