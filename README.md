@@ -7,9 +7,11 @@ Este repositório contém apenas o front-end mobile. Ele consome a **mesma API**
 ## 1 Tecnologias Utilizadas
 
 * **Framework:** Expo (React Native) com TypeScript
-* **Navegação:** a definir (ex.: Expo Router / React Navigation)
-* **Estilização:** a definir
-* **Gerenciamento de Estado:** a definir
+* **Navegação:** React Navigation (`native-stack` para Login/Cadastro e fluxos, `bottom-tabs` com tab bar customizada do Figma na área logada)
+* **Estilização:** StyleSheet do React Native + tokens em `src/theme` (cores, neutros e tipografia extraídos do Figma)
+* **Gerenciamento de Estado:** Context API (`src/auth/AuthContext.tsx`) para a sessão do usuário; estado de tela local nas demais telas
+* **Formulários:** react-hook-form + zod
+* **Recursos do aparelho:** `expo-image-picker` (foto da demanda) e `expo-location` (endereço via GPS)
 * **Dados:** Integração com o back-end Flask (mesma API consumida pela aplicação web)
 
 ## 2 Como rodar o projeto localmente
@@ -45,6 +47,12 @@ Siga os passos abaixo para configurar o ambiente de desenvolvimento na sua máqu
    * Pressione `i` para abrir no simulador iOS (necessário macOS)
    * Pressione `w` para abrir a versão web do Expo no navegador
 
+5. Rode os testes e a checagem de tipos:
+   ```bash
+   npm test
+   npx tsc --noEmit
+   ```
+
 ## 3 Variáveis de Ambiente
 
 O Expo expõe ao código do app apenas variáveis com o prefixo `EXPO_PUBLIC_`. As seguintes variáveis devem ser configuradas no arquivo `.env` na raiz do projeto:
@@ -53,17 +61,22 @@ O Expo expõe ao código do app apenas variáveis com o prefixo `EXPO_PUBLIC_`. 
 | :--- | :--- | :--- |
 | `EXPO_PUBLIC_API_URL` | URL base da API Flask (mesma API consumida pela aplicação web) | `http://localhost:5000` |
 
+> No celular físico (Expo Go), `localhost` aponta para o próprio celular: use o IP da sua máquina na rede (ex.: `http://192.168.3.9:5000`).
+
 ## 4 Estrutura do Projeto
 
-Organização de pastas planejada, seguindo a mesma lógica de responsabilidades adotada na aplicação web:
+Organização de pastas:
 
+* `/src/api`: Cliente HTTP (Axios com refresh de token), envelope de resposta e chamadas de autenticação e demandas
+* `/src/auth`: Estado global de sessão (Context) e armazenamento seguro de tokens
+* `/src/components`: Componentes reutilizáveis de UI (Button, TextField, SelectField, PhotoField, DemandCard, StatusBadge, TabBar, ConfirmModal, Toast...)
+* `/src/domain`: Regras e formatação de domínio (rótulos de categoria/status, datas, protocolo, permissão de exclusão)
+* `/src/hooks`: Hooks reutilizáveis (ex.: endereço atual via GPS)
+* `/src/navigation`: Árvore de navegação (Loading, Auth, App → Tabs + fluxo de nova demanda)
 * `/src/screens`: Telas do aplicativo
-* `/src/components`: Componentes reutilizáveis (UI, formulários, layout)
-* `/src/services`: Configuração e chamadas para a API
-* `/src/store`: Gerenciamento de estado global
-* `/src/types`: Definições de interfaces e tipos do TypeScript
+* `/src/theme`: Cores e tipografia
 
-> No momento o projeto está em estado de **scaffold** (ponto de entrada em `App.tsx`/`index.ts` na raiz, gerado pelo `create-expo-app`); essa estrutura de pastas será criada conforme o desenvolvimento avança.
+Documentação complementar: [fluxo de autenticação](docs/auth-flow.md) e [telas de demandas](docs/demandas.md).
 
 ---
 
