@@ -1,11 +1,15 @@
 import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import type { FotoLocal } from '../../api/demandas';
 import { colors, fonts, palette } from '../../theme';
 import { Icon } from '../Icon';
 
 export type PhotoFieldProps = {
-  value: string | null;
-  onChange: (uri: string) => void;
+  /** Foto escolhida agora no aparelho (ainda não enviada). */
+  value: FotoLocal | null;
+  /** Foto já salva na API (tela de edição); aparece enquanto nenhuma nova for escolhida. */
+  existingUrl?: string | null;
+  onChange: (foto: FotoLocal) => void;
   error?: string;
   testID?: string;
 };
@@ -17,7 +21,7 @@ const PICKER_OPTIONS: ImagePicker.ImagePickerOptions = {
   quality: 0.7,
 };
 
-async function pickFrom(source: 'camera' | 'library'): Promise<string | null> {
+async function pickFrom(source: 'camera' | 'library'): Promise<FotoLocal | null> {
   const permission =
     source === 'camera'
       ? await ImagePicker.requestCameraPermissionsAsync()
@@ -38,16 +42,18 @@ async function pickFrom(source: 'camera' | 'library'): Promise<string | null> {
       ? await ImagePicker.launchCameraAsync(PICKER_OPTIONS)
       : await ImagePicker.launchImageLibraryAsync(PICKER_OPTIONS);
 
-  return result.canceled ? null : result.assets[0]?.uri ?? null;
+  const asset = result.canceled ? undefined : result.assets[0];
+  return asset ? { uri: asset.uri, mimeType: asset.mimeType ?? null } : null;
 }
 
 // Figma "field-photo": card de 150px com "Adicionar foto"; com foto, mostra a
 // imagem com o selo "Alterar foto" (mesmo padrão do frame "Editar Demanda").
-export function PhotoField({ value, onChange, error, testID = 'photo-field' }: PhotoFieldProps) {
+export function PhotoField({ value, existingUrl, onChange, error, testID = 'photo-field' }: PhotoFieldProps) {
+  const previewUri = value?.uri ?? existingUrl ?? null;
   function choose(source: 'camera' | 'library') {
     pickFrom(source)
-      .then((uri) => {
-        if (uri) onChange(uri);
+      .then((foto) => {
+        if (foto) onChange(foto);
       })
       .catch(() => Alert.alert('Não foi possível abrir a câmera/galeria', 'Tente novamente.'));
   }
@@ -66,14 +72,15 @@ export function PhotoField({ value, onChange, error, testID = 'photo-field' }: P
         testID={testID}
         onPress={handlePress}
         accessibilityRole="button"
-        accessibilityLabel={value ? 'Alterar foto' : 'Adicionar foto'}
+        accessibilityLabel={previewUri ? 'Alterar foto' : 'Adicionar foto'}
         style={[styles.card, error ? styles.cardError : null]}
       >
-        {value ? (
+        {previewUri ? (
           <>
-            <Image source={{ uri: value }} style={styles.image} testID={`${testID}-preview`} />
+            <Image source={{ uri: previewUri }} style={styles.image} testID={`${testID}-preview`} />
+            <View style={styles.imageShade} />
             <View style={styles.changeBadge}>
-              <Icon name="camera" size={20} color={palette.textStrong} />
+              <Icon name="camera" size={24} color={palette.text} />
               <Text style={styles.changeText}>Alterar foto</Text>
             </View>
           </>
@@ -127,19 +134,28 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
   },
+  // Figma "photo-preview" + "camera-overlay": foto escurecida 25% e selo branco translúcido.
+  imageShade: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+  },
   changeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
   },
   changeText: {
     fontFamily: fonts.inter.bold,
-    fontSize: 14,
-    color: palette.textStrong,
+    fontSize: 13,
+    color: palette.text,
   },
   error: {
     fontFamily: fonts.inter.semiBold,

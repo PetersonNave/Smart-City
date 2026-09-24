@@ -2,7 +2,7 @@ import { Alert, Text } from 'react-native';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { criarDemanda } from '../../api/demandas';
+import { criarDemanda, enviarFotoDemanda } from '../../api/demandas';
 import { ApiValidationError } from '../../api/envelope';
 import { useCurrentAddress } from '../../hooks/useCurrentAddress';
 import { NovaDemandaScreen } from './NovaDemandaScreen';
@@ -10,15 +10,16 @@ import { NovaDemandaScreen } from './NovaDemandaScreen';
 jest.mock('../../api/demandas', () => ({
   ...jest.requireActual('../../api/demandas'),
   criarDemanda: jest.fn(),
+  enviarFotoDemanda: jest.fn(),
 }));
 jest.mock('../../hooks/useCurrentAddress');
 // A escolha de foto em si é coberta no teste do PhotoField; aqui só simulamos o resultado.
 jest.mock('../../components/PhotoField', () => {
   const { Pressable, Text } = require('react-native');
   return {
-    PhotoField: ({ onChange, error }: { onChange: (uri: string) => void; error?: string }) => (
+    PhotoField: ({ onChange, error }: { onChange: (foto: object) => void; error?: string }) => (
       <>
-        <Pressable testID="nova-foto" onPress={() => onChange('file:///foto.jpg')} />
+        <Pressable testID="nova-foto" onPress={() => onChange({ uri: 'file:///foto.jpg', mimeType: 'image/jpeg' })} />
         {error ? <Text>{error}</Text> : null}
       </>
     ),
@@ -31,8 +32,13 @@ function StartScreen() {
   return <Text>Tela anterior</Text>;
 }
 
-function EnviadaScreen({ route }: { route: { params: { demanda: { id: number } } } }) {
-  return <Text>Enviada #{route.params.demanda.id}</Text>;
+function EnviadaScreen({ route }: { route: { params: { demanda: { id: number; photoUrl?: string }; fotoPendente?: boolean } } }) {
+  const { demanda, fotoPendente } = route.params;
+  return (
+    <Text>
+      Enviada #{demanda.id} {fotoPendente ? 'sem foto' : `com ${demanda.photoUrl}`}
+    </Text>
+  );
 }
 
 // Stack real (Start → NovaDemanda) para o voltar e o bloqueio de saída funcionarem de verdade.
@@ -94,8 +100,9 @@ describe('NovaDemandaScreen', () => {
   });
 
   it('sends the demand in the backend format and opens the confirmation screen', async () => {
-    const created = { id: 187, status: 'PENDING', createdAt: '2026-10-15T12:00:00' };
+    const created = { id: 187, status: 'PENDING', createdAt: '2026-10-15T12:00:00', photoUrl: null };
     (criarDemanda as jest.Mock).mockResolvedValue(created);
+    (enviarFotoDemanda as jest.Mock).mockResolvedValue({ ...created, photoUrl: 'http://api/f.jpg' });
     renderScreen();
     await waitFor(() => expect(screen.getByTestId('nova-localizacao-input').props.value).not.toBe(''));
 
@@ -111,7 +118,8 @@ describe('NovaDemandaScreen', () => {
         prioridade: 'media',
       })
     );
-    await waitFor(() => expect(screen.getByText('Enviada #187')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Enviada #187 com http://api/f.jpg')).toBeTruthy());
+    expect(enviarFotoDemanda).toHaveBeenCalledWith(187, { uri: 'file:///foto.jpg', mimeType: 'image/jpeg' });
     // Envio bem-sucedido não pode disparar o aviso de descartar.
     expect(Alert.alert).not.toHaveBeenCalled();
   });
@@ -127,7 +135,20 @@ describe('NovaDemandaScreen', () => {
     fireEvent.press(screen.getByTestId('nova-submit'));
 
     await waitFor(() => expect(screen.getByText('Já existe uma demanda com este título.')).toBeTruthy());
-    expect(screen.queryByText('Enviada #187')).toBeNull();
+    expect(screen.queryByText(/Enviada/)).toBeNull();
+    expect(enviarFotoDemanda).not.toHaveBeenCalled();
+  });
+
+  it('still confirms the demand when only the photo upload fails', async () => {
+    (criarDemanda as jest.Mock).mockResolvedValue({ id: 188, status: 'PENDING', createdAt: '2026-10-15T12:00:00', photoUrl: null });
+    (enviarFotoDemanda as jest.Mock).mockRejectedValue(new Error('Network'));
+    renderScreen();
+    await waitFor(() => expect(screen.getByTestId('nova-localizacao-input').props.value).not.toBe(''));
+
+    fillForm();
+    fireEvent.press(screen.getByTestId('nova-submit'));
+
+    await waitFor(() => expect(screen.getByText('Enviada #188 sem foto')).toBeTruthy());
   });
 
   it('leaves without asking when nothing was filled in', async () => {

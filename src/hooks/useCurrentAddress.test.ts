@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react-native';
+import { act, renderHook, waitFor } from '@testing-library/react-native';
 import * as Location from 'expo-location';
 import { formatAddress, useCurrentAddress } from './useCurrentAddress';
 
@@ -62,5 +62,20 @@ describe('useCurrentAddress', () => {
 
     await waitFor(() => expect(result.current.status).toBe('denied'));
     expect(Location.getCurrentPositionAsync).not.toHaveBeenCalled();
+  });
+
+  it('waits for retry() before locating when auto is false', async () => {
+    (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({ granted: true });
+    (Location.getCurrentPositionAsync as jest.Mock).mockResolvedValue({ coords: { latitude: 1, longitude: 2 } });
+    (Location.reverseGeocodeAsync as jest.Mock).mockResolvedValue([{ street: 'Av. Brasil', streetNumber: '1200' }]);
+
+    const { result } = renderHook(() => useCurrentAddress({ auto: false }));
+    expect(result.current.status).toBe('idle');
+    expect(Location.requestForegroundPermissionsAsync).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await result.current.retry();
+    });
+    expect(result.current.address).toBe('Av. Brasil, 1200');
   });
 });

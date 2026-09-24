@@ -4,8 +4,17 @@ import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
 import { fonts, palette } from '../../theme';
 import { Icon } from '../Icon';
 
+export type ToastTone = 'success' | 'warning';
+
+const TONES = {
+  success: { background: palette.successSoft, icon: palette.success, text: palette.successStrong, glyph: 'check' },
+  warning: { background: palette.warningSoft, icon: palette.warningStrong, text: palette.warningText, glyph: 'alert' },
+} as const;
+
 export type ToastProps = {
   message: string | null;
+  /** success = Figma "success-toast"; warning = mesmo formato em âmbar (ex.: foto não enviada). */
+  tone?: ToastTone;
   /** Chamado após `duration` ms para o dono limpar a mensagem. */
   onHide: () => void;
   duration?: number;
@@ -14,7 +23,8 @@ export type ToastProps = {
 };
 
 // Figma "success-toast": fundo verde claro, check num círculo verde, texto verde escuro.
-export function Toast({ message, onHide, duration = 3000, style, testID = 'toast' }: ToastProps) {
+export function Toast({ message, onHide, tone = 'success', duration = 3000, style, testID = 'toast' }: ToastProps) {
+  const colorsForTone = TONES[tone];
   useEffect(() => {
     if (!message) return;
     const timer = setTimeout(onHide, duration);
@@ -27,15 +37,15 @@ export function Toast({ message, onHide, duration = 3000, style, testID = 'toast
     <Animated.View
       entering={FadeInUp}
       exiting={FadeOutUp}
-      style={[styles.toast, style]}
+      style={[styles.toast, { backgroundColor: colorsForTone.background }, style]}
       testID={testID}
       accessibilityRole="alert"
       accessibilityLiveRegion="polite"
     >
-      <View style={styles.check}>
-        <Icon name="check" size={10} color={palette.white} strokeWidth={3} />
+      <View style={[styles.check, { backgroundColor: colorsForTone.icon }]}>
+        <Icon name={colorsForTone.glyph} size={10} color={palette.white} strokeWidth={3} />
       </View>
-      <Text style={styles.text}>{message}</Text>
+      <Text style={[styles.text, { color: colorsForTone.text }]}>{message}</Text>
     </Animated.View>
   );
 }

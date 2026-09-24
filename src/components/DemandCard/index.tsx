@@ -29,7 +29,7 @@ export function DemandCard({ demanda, expanded = false, onToggle, onOpenDetails,
       style={styles.card}
     >
       <View style={styles.header}>
-        <DemandThumb category={demanda.category} />
+        <DemandThumb category={demanda.category} photoUrl={demanda.photoUrl} testID={`${testID}-thumb`} />
         <View style={styles.info}>
           <View style={styles.titleRow}>
             <Text style={styles.title} numberOfLines={1}>

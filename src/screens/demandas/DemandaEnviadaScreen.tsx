@@ -12,7 +12,7 @@ type Props = AppStackScreenProps<'DemandaEnviada'>;
 
 // Figma "Demanda enviada".
 export function DemandaEnviadaScreen({ navigation, route }: Props) {
-  const { demanda } = route.params;
+  const { demanda, fotoPendente = false } = route.params;
   const insets = useSafeAreaInsets();
   const status = STATUS_META[demanda.status];
 
@@ -50,6 +50,14 @@ export function DemandaEnviadaScreen({ navigation, route }: Props) {
               <Text style={styles.statusPillText}>{status.label}</Text>
             </View>
           </View>
+          {fotoPendente && (
+            <View style={styles.photoWarning} testID="enviada-foto-pendente" accessibilityRole="alert">
+              <Icon name="alert" size={18} color={palette.warningText} />
+              <Text style={styles.photoWarningText}>
+                A foto não pôde ser enviada. Você pode adicioná-la depois em "Editar Demanda".
+              </Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.actions}>
@@ -144,6 +152,22 @@ const styles = StyleSheet.create({
     fontFamily: fonts.inter.extraBold,
     fontSize: 14,
     color: palette.white,
+  },
+  photoWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    width: '100%',
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: palette.warningSoft,
+  },
+  photoWarningText: {
+    flex: 1,
+    fontFamily: fonts.inter.semiBold,
+    fontSize: 13,
+    lineHeight: 18,
+    color: palette.warningText,
   },
   actions: {
     gap: 12,

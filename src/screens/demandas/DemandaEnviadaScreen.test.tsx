@@ -11,6 +11,7 @@ const demanda = {
   priority: 'media',
   createdAt: '2026-10-15T12:00:00',
   updatedAt: null,
+  photoUrl: null,
 };
 
 describe('DemandaEnviadaScreen', () => {
@@ -40,5 +41,23 @@ describe('DemandaEnviadaScreen', () => {
     fireEvent.press(screen.getByTestId('enviada-inicio'));
 
     expect(navigation.navigate).toHaveBeenCalledWith('Tabs', { screen: 'Inicio' });
+  });
+
+  it('does not show the photo warning when the photo was uploaded', () => {
+    expect(screen.queryByTestId('enviada-foto-pendente')).toBeNull();
+  });
+});
+
+describe('DemandaEnviadaScreen with a failed photo upload', () => {
+  it('tells the user the photo can be added later from the edit screen', () => {
+    render(
+      <DemandaEnviadaScreen
+        navigation={{ navigate: jest.fn() } as never}
+        route={{ params: { demanda, fotoPendente: true } } as never}
+      />
+    );
+
+    expect(screen.getByTestId('enviada-foto-pendente')).toBeTruthy();
+    expect(screen.getByText(/A foto não pôde ser enviada/)).toBeTruthy();
   });
 });

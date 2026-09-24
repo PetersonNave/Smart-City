@@ -29,6 +29,7 @@ export const palette = {
   warning: '#FFB300',
   warningStrong: '#F59E0B',
   warningSoft: '#FFF4E5',
+  warningText: '#8A5300',
   info: '#205072',
   infoSoft: '#E0F2F1',
   success: '#56C596',

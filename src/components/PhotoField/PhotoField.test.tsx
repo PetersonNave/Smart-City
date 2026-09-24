@@ -34,7 +34,7 @@ describe('PhotoField', () => {
     (ImagePicker.requestMediaLibraryPermissionsAsync as jest.Mock).mockResolvedValue({ granted: true });
     (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({
       canceled: false,
-      assets: [{ uri: 'file:///foto.jpg' }],
+      assets: [{ uri: 'file:///foto.jpg', mimeType: 'image/jpeg' }],
     });
     const onChange = jest.fn();
     render(<PhotoField value={null} onChange={onChange} />);
@@ -42,7 +42,7 @@ describe('PhotoField', () => {
     fireEvent.press(screen.getByTestId('photo-field'));
     pressAlertOption('Escolher da galeria');
 
-    await waitFor(() => expect(onChange).toHaveBeenCalledWith('file:///foto.jpg'));
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith({ uri: 'file:///foto.jpg', mimeType: 'image/jpeg' }));
   });
 
   it('does not open the camera when permission is denied', async () => {
@@ -59,9 +59,19 @@ describe('PhotoField', () => {
   });
 
   it('shows the preview with "Alterar foto" once a photo is set', () => {
-    render(<PhotoField value="file:///foto.jpg" onChange={jest.fn()} />);
+    render(<PhotoField value={{ uri: 'file:///foto.jpg' }} onChange={jest.fn()} />);
 
-    expect(screen.getByTestId('photo-field-preview')).toBeTruthy();
+    expect(screen.getByTestId('photo-field-preview').props.source).toEqual({ uri: 'file:///foto.jpg' });
     expect(screen.getByText('Alterar foto')).toBeTruthy();
+  });
+
+  it('shows the already-saved photo when editing, until a new one is picked', () => {
+    const { rerender } = render(
+      <PhotoField value={null} existingUrl="http://api/fotos/a.jpg" onChange={jest.fn()} />
+    );
+    expect(screen.getByTestId('photo-field-preview').props.source).toEqual({ uri: 'http://api/fotos/a.jpg' });
+
+    rerender(<PhotoField value={{ uri: 'file:///nova.jpg' }} existingUrl="http://api/fotos/a.jpg" onChange={jest.fn()} />);
+    expect(screen.getByTestId('photo-field-preview').props.source).toEqual({ uri: 'file:///nova.jpg' });
   });
 });

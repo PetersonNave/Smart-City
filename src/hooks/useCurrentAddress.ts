@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import * as Location from 'expo-location';
 
-export type AddressStatus = 'locating' | 'ready' | 'denied' | 'error';
+export type AddressStatus = 'idle' | 'locating' | 'ready' | 'denied' | 'error';
 
 type GeocodedAddress = Pick<
   Location.LocationGeocodedAddress,
@@ -21,9 +21,11 @@ export function formatAddress(address: GeocodedAddress | undefined): string | nu
 /**
  * Captura a posição atual (permissão "em uso") e converte em endereço legível.
  * Se o usuário negar a permissão ou o GPS falhar, o formulário cai para digitação manual.
+ *
+ * Com `auto: false` (tela de edição, que já tem endereço) só localiza ao chamar `retry`.
  */
-export function useCurrentAddress() {
-  const [status, setStatus] = useState<AddressStatus>('locating');
+export function useCurrentAddress({ auto = true }: { auto?: boolean } = {}) {
+  const [status, setStatus] = useState<AddressStatus>(auto ? 'locating' : 'idle');
   const [address, setAddress] = useState<string | null>(null);
 
   const locate = useCallback(async () => {
@@ -45,8 +47,8 @@ export function useCurrentAddress() {
   }, []);
 
   useEffect(() => {
-    locate();
-  }, [locate]);
+    if (auto) locate();
+  }, [auto, locate]);
 
   return { status, address, retry: locate };
 }

@@ -1,55 +1,55 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { usePreventRemove } from '@react-navigation/native';
-import { Controller, useForm } from 'react-hook-form';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ApiValidationError } from '../../api/envelope';
-import { criarDemanda, DEMANDA_CATEGORIAS, type Demanda, type DemandaCategoria } from '../../api/demandas';
+import { criarDemanda, enviarFotoDemanda, type Demanda, type DemandaCategoria } from '../../api/demandas';
 import { Button } from '../../components/Button';
 import { GradientBackground } from '../../components/GradientBackground';
 import { Icon } from '../../components/Icon';
-import { PhotoField } from '../../components/PhotoField';
 import { ScreenHeader } from '../../components/ScreenHeader';
-import { SelectField } from '../../components/SelectField';
-import { TextField } from '../../components/TextField';
-import { CATEGORIA_LABELS, STATUS_META } from '../../domain/demanda';
-import { useCurrentAddress } from '../../hooks/useCurrentAddress';
+import { STATUS_META } from '../../domain/demanda';
+import { useCurrentAddress, type AddressStatus } from '../../hooks/useCurrentAddress';
+import { useDiscardGuard } from '../../hooks/useDiscardGuard';
 import type { AppStackScreenProps } from '../../navigation/types';
 import { fonts, palette } from '../../theme';
-import { novaDemandaSchema, type NovaDemandaFormValues } from './NovaDemandaScreen.schema';
+import { DemandaFormFields } from './DemandaFormFields';
+import { DEMANDA_FORM_VAZIO, novaDemandaSchema, type DemandaFormValues } from './demandaForm.schema';
 
 type Props = AppStackScreenProps<'NovaDemanda'>;
 
-const CATEGORIA_OPTIONS = DEMANDA_CATEGORIAS.map((value) => ({ value, label: CATEGORIA_LABELS[value] }));
 const API_FIELDS = ['titulo', 'descricao', 'categoria', 'localizacao'] as const;
 
-const LOCATION_PLACEHOLDER = {
+const LOCATION_PLACEHOLDER: Record<AddressStatus, string> = {
+  idle: 'Endereço do problema',
   locating: 'Obtendo localização pelo GPS...',
   ready: 'Endereço do problema',
   denied: 'Digite o endereço do problema',
   error: 'Digite o endereço do problema',
-} as const;
+};
 
 // Figma "Nova demanda" (estados normal e "Anexe ao menos uma foto").
 export function NovaDemandaScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const location = useCurrentAddress();
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [created, setCreated] = useState<Demanda | null>(null);
+  const [created, setCreated] = useState<{ demanda: Demanda; fotoPendente: boolean } | null>(null);
   const {
     control,
     handleSubmit,
     setError,
     setValue,
     getValues,
+    watch,
     formState: { errors, isSubmitting, isDirty },
-  } = useForm<NovaDemandaFormValues>({
+  } = useForm<DemandaFormValues>({
     resolver: zodResolver(novaDemandaSchema),
-    defaultValues: { foto: '', titulo: '', categoria: '', descricao: '', localizacao: '' },
+    defaultValues: DEMANDA_FORM_VAZIO,
   });
   // Guarda o endereço vindo do GPS para saber se o usuário o editou à mão.
   const gpsAddress = useRef<string | null>(null);
+  const localizacao = watch('localizacao');
 
   useEffect(() => {
     if (location.status === 'ready' && location.address && !getValues('localizacao')) {
@@ -58,25 +58,18 @@ export function NovaDemandaScreen({ navigation }: Props) {
     }
   }, [location.status, location.address, getValues, setValue, errors.localizacao]);
 
-  // Voltar (botão, gesto ou botão físico do Android) com o formulário preenchido pede confirmação.
-  usePreventRemove(isDirty && !created, ({ data }) => {
-    Alert.alert('Descartar demanda?', 'As informações preenchidas serão perdidas.', [
-      { text: 'Continuar editando', style: 'cancel' },
-      { text: 'Descartar', style: 'destructive', onPress: () => navigation.dispatch(data.action) },
-    ]);
-  });
+  useDiscardGuard(isDirty && !created, 'Descartar demanda?');
 
   // Navega só depois do re-render com `created`, para o bloqueio acima já estar desligado.
   useEffect(() => {
-    if (created) navigation.replace('DemandaEnviada', { demanda: created });
+    if (created) navigation.replace('DemandaEnviada', created);
   }, [created, navigation]);
 
-  async function onSubmit(values: NovaDemandaFormValues) {
+  async function onSubmit(values: DemandaFormValues) {
     setSubmitError(null);
+    let demanda: Demanda;
     try {
-      // A API ainda não recebe fotos (não há campo no DemandaCreateSchema): a foto é
-      // exigida pelo fluxo do Figma, mas por enquanto fica só no aparelho.
-      const demanda = await criarDemanda({
+      demanda = await criarDemanda({
         titulo: values.titulo,
         descricao: values.descricao,
         categoria: values.categoria as DemandaCategoria,
@@ -84,7 +77,6 @@ export function NovaDemandaScreen({ navigation }: Props) {
         // Cidadão não escolhe prioridade no Figma; a triagem fica com o gestor.
         prioridade: 'media',
       });
-      setCreated(demanda);
     } catch (error) {
       if (error instanceof ApiValidationError) {
         let mappedAny = false;
@@ -99,6 +91,16 @@ export function NovaDemandaScreen({ navigation }: Props) {
         return;
       }
       setSubmitError(error instanceof Error ? error.message : 'Não foi possível enviar a demanda.');
+      return;
+    }
+
+    // A demanda já existe: se só a foto falhar, segue para a confirmação avisando que
+    // a foto pode ser reenviada pela edição (em vez de deixar o usuário reenviar tudo).
+    try {
+      const comFoto = await enviarFotoDemanda(demanda.id, values.foto!);
+      setCreated({ demanda: comFoto, fotoPendente: false });
+    } catch {
+      setCreated({ demanda, fotoPendente: true });
     }
   }
 
@@ -111,96 +113,18 @@ export function NovaDemandaScreen({ navigation }: Props) {
           contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}
           keyboardShouldPersistTaps="handled"
         >
-          <Controller
+          <DemandaFormFields
             control={control}
-            name="foto"
-            render={({ field }) => (
-              <PhotoField
-                value={field.value || null}
-                onChange={(uri) => field.onChange(uri)}
-                error={errors.foto?.message}
-                testID="nova-foto"
+            errors={errors}
+            testIDPrefix="nova"
+            locationPlaceholder={LOCATION_PLACEHOLDER[location.status]}
+            locationHint={
+              <LocationHint
+                status={location.status}
+                isFromGps={Boolean(localizacao) && localizacao === gpsAddress.current}
+                onRetry={location.retry}
               />
-            )}
-          />
-
-          <Controller
-            control={control}
-            name="titulo"
-            render={({ field }) => (
-              <TextField
-                variant="card"
-                label="Título"
-                placeholder="Ex.: Semáforo danificado"
-                autoCapitalize="sentences"
-                value={field.value}
-                onChangeText={field.onChange}
-                onBlur={field.onBlur}
-                error={errors.titulo?.message}
-                testID="nova-titulo"
-              />
-            )}
-          />
-
-          <Controller
-            control={control}
-            name="categoria"
-            render={({ field }) => (
-              <SelectField
-                label="Categoria"
-                placeholder="Selecione uma Categoria"
-                value={field.value as DemandaCategoria | ''}
-                options={CATEGORIA_OPTIONS}
-                onChange={field.onChange}
-                error={errors.categoria?.message}
-                testID="nova-categoria"
-              />
-            )}
-          />
-
-          <Controller
-            control={control}
-            name="descricao"
-            render={({ field }) => (
-              <TextField
-                variant="card"
-                label="Descrição"
-                placeholder="Descreva o problema encontrado"
-                multiline
-                autoCapitalize="sentences"
-                value={field.value}
-                onChangeText={field.onChange}
-                onBlur={field.onBlur}
-                error={errors.descricao?.message}
-                testID="nova-descricao"
-              />
-            )}
-          />
-
-          <Controller
-            control={control}
-            name="localizacao"
-            render={({ field }) => (
-              <View>
-                <TextField
-                  variant="card"
-                  label="Localização"
-                  icon="map"
-                  placeholder={LOCATION_PLACEHOLDER[location.status]}
-                  autoCapitalize="sentences"
-                  value={field.value}
-                  onChangeText={field.onChange}
-                  onBlur={field.onBlur}
-                  error={errors.localizacao?.message}
-                  testID="nova-localizacao"
-                />
-                <LocationHint
-                  status={location.status}
-                  isFromGps={Boolean(field.value) && field.value === gpsAddress.current}
-                  onRetry={location.retry}
-                />
-              </View>
-            )}
+            }
           />
 
           <View style={styles.statusRow}>
@@ -236,7 +160,7 @@ function LocationHint({
   isFromGps,
   onRetry,
 }: {
-  status: ReturnType<typeof useCurrentAddress>['status'];
+  status: AddressStatus;
   isFromGps: boolean;
   onRetry: () => void;
 }) {

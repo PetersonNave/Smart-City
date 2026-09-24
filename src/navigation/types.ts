@@ -28,7 +28,8 @@ export type AppTabsParamList = {
 export type AppStackParamList = {
   Tabs: NavigatorScreenParams<AppTabsParamList> | undefined;
   NovaDemanda: undefined;
-  DemandaEnviada: { demanda: Demanda };
+  /** fotoPendente: a demanda foi criada mas o upload da foto falhou. */
+  DemandaEnviada: { demanda: Demanda; fotoPendente?: boolean };
 };
 
 export type AppStackScreenProps<T extends keyof AppStackParamList> = NativeStackScreenProps<AppStackParamList, T>;

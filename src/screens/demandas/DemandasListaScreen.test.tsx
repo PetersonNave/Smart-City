@@ -22,6 +22,7 @@ function makeDemanda(overrides: Partial<Demanda>): Demanda {
     priority: 'media',
     createdAt: '2026-10-15T12:00:00',
     updatedAt: null,
+    photoUrl: null,
     ...overrides,
   };
 }
