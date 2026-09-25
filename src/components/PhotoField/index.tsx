@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import type { FotoLocal } from '../../api/demandas';
 import { colors, fonts, palette } from '../../theme';
+import { CameraCapture } from '../CameraCapture';
 import { Icon } from '../Icon';
 
 export type PhotoFieldProps = {
@@ -21,27 +23,15 @@ const PICKER_OPTIONS: ImagePicker.ImagePickerOptions = {
   quality: 0.7,
 };
 
-async function pickFrom(source: 'camera' | 'library'): Promise<FotoLocal | null> {
-  const permission =
-    source === 'camera'
-      ? await ImagePicker.requestCameraPermissionsAsync()
-      : await ImagePicker.requestMediaLibraryPermissionsAsync();
-
+/** Galeria via expo-image-picker (a câmera é a do próprio app, em CameraCapture). */
+async function pickFromLibrary(): Promise<FotoLocal | null> {
+  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permission.granted) {
-    Alert.alert(
-      'Permissão necessária',
-      source === 'camera'
-        ? 'Autorize o acesso à câmera nas configurações para fotografar o problema.'
-        : 'Autorize o acesso às fotos nas configurações para anexar uma imagem.'
-    );
+    Alert.alert('Permissão necessária', 'Autorize o acesso às fotos nas configurações para anexar uma imagem.');
     return null;
   }
 
-  const result =
-    source === 'camera'
-      ? await ImagePicker.launchCameraAsync(PICKER_OPTIONS)
-      : await ImagePicker.launchImageLibraryAsync(PICKER_OPTIONS);
-
+  const result = await ImagePicker.launchImageLibraryAsync(PICKER_OPTIONS);
   const asset = result.canceled ? undefined : result.assets[0];
   return asset ? { uri: asset.uri, mimeType: asset.mimeType ?? null } : null;
 }
@@ -50,18 +40,20 @@ async function pickFrom(source: 'camera' | 'library'): Promise<FotoLocal | null>
 // imagem com o selo "Alterar foto" (mesmo padrão do frame "Editar Demanda").
 export function PhotoField({ value, existingUrl, onChange, error, testID = 'photo-field' }: PhotoFieldProps) {
   const previewUri = value?.uri ?? existingUrl ?? null;
-  function choose(source: 'camera' | 'library') {
-    pickFrom(source)
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+
+  function chooseFromLibrary() {
+    pickFromLibrary()
       .then((foto) => {
         if (foto) onChange(foto);
       })
-      .catch(() => Alert.alert('Não foi possível abrir a câmera/galeria', 'Tente novamente.'));
+      .catch(() => Alert.alert('Não foi possível abrir a galeria', 'Tente novamente.'));
   }
 
   function handlePress() {
     Alert.alert('Adicionar foto', 'Como você quer anexar a foto do problema?', [
-      { text: 'Tirar foto', onPress: () => choose('camera') },
-      { text: 'Escolher da galeria', onPress: () => choose('library') },
+      { text: 'Tirar foto', onPress: () => setIsCameraOpen(true) },
+      { text: 'Escolher da galeria', onPress: chooseFromLibrary },
       { text: 'Cancelar', style: 'cancel' },
     ]);
   }
@@ -96,6 +88,15 @@ export function PhotoField({ value, existingUrl, onChange, error, testID = 'phot
           {error}
         </Text>
       )}
+      <CameraCapture
+        visible={isCameraOpen}
+        onCapture={(foto) => {
+          setIsCameraOpen(false);
+          onChange(foto);
+        }}
+        onClose={() => setIsCameraOpen(false)}
+        testID={`${testID}-camera`}
+      />
     </View>
   );
 }

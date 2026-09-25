@@ -11,7 +11,7 @@ Este repositório contém apenas o front-end mobile. Ele consome a **mesma API**
 * **Estilização:** StyleSheet do React Native + tokens em `src/theme` (cores, neutros e tipografia extraídos do Figma)
 * **Gerenciamento de Estado:** Context API (`src/auth/AuthContext.tsx`) para a sessão do usuário; estado de tela local nas demais telas
 * **Formulários:** react-hook-form + zod
-* **Recursos do aparelho:** `expo-image-picker` (foto da demanda) e `expo-location` (endereço via GPS)
+* **Recursos do aparelho:** `expo-camera` (câmera do app para fotografar a demanda), `expo-image-picker` (foto da galeria) e `expo-location` (endereço via GPS)
 * **Dados:** Integração com o back-end Flask (mesma API consumida pela aplicação web)
 
 ## 2 Como rodar o projeto localmente

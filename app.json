@@ -30,14 +30,20 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "O ResolveAí usa suas fotos para anexar imagens às demandas registradas.",
-          "cameraPermission": "O ResolveAí usa a câmera para fotografar o problema que você está registrando."
+          "photosPermission": "O ResolveAí usa suas fotos para anexar imagens às demandas registradas."
         }
       ],
       [
         "expo-location",
         {
           "locationWhenInUsePermission": "O ResolveAí usa sua localização para preencher o endereço da demanda automaticamente."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "O ResolveAí usa a câmera para fotografar o problema que você está registrando.",
+          "recordAudioAndroid": false
         }
       ]
     ]

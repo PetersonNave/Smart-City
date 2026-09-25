@@ -9,6 +9,18 @@ jest.mock('expo-image-picker', () => ({
   launchCameraAsync: jest.fn(),
   launchImageLibraryAsync: jest.fn(),
 }));
+// A câmera do app (expo-camera) tem teste próprio; aqui só simulamos a foto tirada.
+jest.mock('../CameraCapture', () => {
+  const { Pressable, Text } = require('react-native');
+  return {
+    CameraCapture: ({ visible, onCapture }: { visible: boolean; onCapture: (foto: object) => void }) =>
+      visible ? (
+        <Pressable testID="camera-mock" onPress={() => onCapture({ uri: 'file:///camera.jpg', mimeType: 'image/jpeg' })}>
+          <Text>câmera aberta</Text>
+        </Pressable>
+      ) : null,
+  };
+});
 
 type AlertButtons = Parameters<typeof Alert.alert>[2];
 
@@ -21,7 +33,10 @@ describe('PhotoField', () => {
   beforeEach(() => {
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   });
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => {
+    jest.restoreAllMocks();
+    jest.clearAllMocks();
+  });
 
   it('shows the "Adicionar foto" empty state and the error message', () => {
     render(<PhotoField value={null} onChange={jest.fn()} error="Anexe ao menos uma foto" />);
@@ -45,16 +60,30 @@ describe('PhotoField', () => {
     await waitFor(() => expect(onChange).toHaveBeenCalledWith({ uri: 'file:///foto.jpg', mimeType: 'image/jpeg' }));
   });
 
-  it('does not open the camera when permission is denied', async () => {
-    (ImagePicker.requestCameraPermissionsAsync as jest.Mock).mockResolvedValue({ granted: false });
+  it('"Tirar foto" opens the in-app camera (expo-camera) instead of the system camera', async () => {
     const onChange = jest.fn();
     render(<PhotoField value={null} onChange={onChange} />);
 
     fireEvent.press(screen.getByTestId('photo-field'));
     pressAlertOption('Tirar foto');
+    await waitFor(() => expect(screen.getByText('câmera aberta')).toBeTruthy());
+    fireEvent.press(screen.getByTestId('camera-mock'));
+
+    expect(onChange).toHaveBeenCalledWith({ uri: 'file:///camera.jpg', mimeType: 'image/jpeg' });
+    expect(ImagePicker.launchCameraAsync).not.toHaveBeenCalled();
+    expect(screen.queryByText('câmera aberta')).toBeNull();
+  });
+
+  it('does not open the gallery when its permission is denied', async () => {
+    (ImagePicker.requestMediaLibraryPermissionsAsync as jest.Mock).mockResolvedValue({ granted: false });
+    const onChange = jest.fn();
+    render(<PhotoField value={null} onChange={onChange} />);
+
+    fireEvent.press(screen.getByTestId('photo-field'));
+    pressAlertOption('Escolher da galeria');
 
     await waitFor(() => expect(Alert.alert).toHaveBeenCalledWith('Permissão necessária', expect.any(String)));
-    expect(ImagePicker.launchCameraAsync).not.toHaveBeenCalled();
+    expect(ImagePicker.launchImageLibraryAsync).not.toHaveBeenCalled();
     expect(onChange).not.toHaveBeenCalled();
   });
 

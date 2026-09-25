@@ -46,6 +46,9 @@ rola deve reservar `useTabBarInset()` de espaço embaixo.
 
 ## Nova demanda (`NovaDemandaScreen`) → Demanda enviada
 
+- **Foto:** "Tirar foto" abre a câmera do próprio app (`CameraCapture`, com **Expo Camera**:
+  permissão, prévia ao vivo, troca de câmera frontal/traseira e confirmação "Usar foto" /
+  "Tirar outra"). "Escolher da galeria" usa o `expo-image-picker`.
 - Campos (`DemandaFormFields`, compartilhado com a edição): foto, título, categoria,
   descrição e localização (preenchida pelo GPS com reverse geocoding; se a permissão for
   negada, o usuário digita o endereço).
