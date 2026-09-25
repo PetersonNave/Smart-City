@@ -1,13 +1,15 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { excluirDemanda, listarDemandas, type Demanda } from '../../api/demandas';
 import { useAuth } from '../../auth/AuthContext';
+import { createMockRouter } from '../../test-utils/mockRouter';
 import { DemandasListaScreen } from './DemandasListaScreen';
 
 jest.mock('../../api/demandas');
 jest.mock('../../auth/AuthContext');
-// Sem NavigationContainer: o foco da tela vira um efeito de montagem comum.
-jest.mock('@react-navigation/native', () => ({
-  ...jest.requireActual('@react-navigation/native'),
+const mockRouter = createMockRouter();
+// Sem o Expo Router montado: o foco da tela vira um efeito de montagem comum.
+jest.mock('expo-router', () => ({
+  useRouter: () => mockRouter,
   useFocusEffect: (effect: () => void) => require('react').useEffect(effect, [effect]),
 }));
 
@@ -28,10 +30,8 @@ function makeDemanda(overrides: Partial<Demanda>): Demanda {
 }
 
 const paginacao = { total: 2, paginas: 1, pagina_atual: 1, por_pagina: 10, tem_proxima: false, tem_anterior: false };
-const navigation = { navigate: jest.fn() };
-
 function renderScreen() {
-  return render(<DemandasListaScreen navigation={navigation as never} route={{} as never} />);
+  return render(<DemandasListaScreen />);
 }
 
 describe('DemandasListaScreen', () => {
@@ -100,8 +100,8 @@ describe('DemandasListaScreen', () => {
     fireEvent.press(screen.getByTestId('demand-card-5-open'));
     fireEvent.press(screen.getByTestId('demandas-fab'));
 
-    expect(navigation.navigate).toHaveBeenCalledWith('DemandaDetalhe', { id: 5 });
-    expect(navigation.navigate).toHaveBeenCalledWith('NovaDemanda');
+    expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/demandas/[id]', params: { id: '5' } });
+    expect(mockRouter.push).toHaveBeenCalledWith('/nova-demanda');
   });
 });
 

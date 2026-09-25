@@ -2,13 +2,12 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 import { HomeScreen } from './HomeScreen';
 import { useAuth } from '../../auth/AuthContext';
 
-const mockNavigate = jest.fn();
+import { createMockRouter } from '../../test-utils/mockRouter';
 
 jest.mock('../../auth/AuthContext');
-jest.mock('@react-navigation/native', () => ({
-  ...jest.requireActual('@react-navigation/native'),
-  useNavigation: () => ({ navigate: mockNavigate }),
-}));
+
+const mockRouter = createMockRouter();
+jest.mock('expo-router', () => ({ useRouter: () => mockRouter }));
 
 const user = { id: 1, name: 'testuser', email: 'test@example.com', role: 'cidadao', createdAt: '2026-01-01' };
 
@@ -38,6 +37,6 @@ describe('HomeScreen', () => {
     render(<HomeScreen />);
     fireEvent.press(screen.getByTestId('home-nova-demanda'));
 
-    expect(mockNavigate).toHaveBeenCalledWith('NovaDemanda');
+    expect(mockRouter.push).toHaveBeenCalledWith('/nova-demanda');
   });
 });

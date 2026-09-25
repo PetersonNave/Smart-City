@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ApiValidationError } from '../../api/envelope';
 import { criarDemanda, enviarFotoDemanda, type Demanda, type DemandaCategoria } from '../../api/demandas';
@@ -12,12 +13,10 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { STATUS_META } from '../../domain/demanda';
 import { useCurrentAddress, type AddressStatus } from '../../hooks/useCurrentAddress';
 import { useDiscardGuard } from '../../hooks/useDiscardGuard';
-import type { AppStackScreenProps } from '../../navigation/types';
+import { routes } from '../../navigation/routes';
 import { fonts, palette } from '../../theme';
 import { DemandaFormFields } from './DemandaFormFields';
 import { DEMANDA_FORM_VAZIO, novaDemandaSchema, type DemandaFormValues } from './demandaForm.schema';
-
-type Props = AppStackScreenProps<'NovaDemanda'>;
 
 const API_FIELDS = ['titulo', 'descricao', 'categoria', 'localizacao'] as const;
 
@@ -30,7 +29,8 @@ const LOCATION_PLACEHOLDER: Record<AddressStatus, string> = {
 };
 
 // Figma "Nova demanda" (estados normal e "Anexe ao menos uma foto").
-export function NovaDemandaScreen({ navigation }: Props) {
+export function NovaDemandaScreen() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const location = useCurrentAddress();
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -62,8 +62,8 @@ export function NovaDemandaScreen({ navigation }: Props) {
 
   // Navega só depois do re-render com `created`, para o bloqueio acima já estar desligado.
   useEffect(() => {
-    if (created) navigation.replace('DemandaEnviada', created);
-  }, [created, navigation]);
+    if (created) router.replace(routes.demandaEnviada(created.demanda.id, created.fotoPendente));
+  }, [created, router]);
 
   async function onSubmit(values: DemandaFormValues) {
     setSubmitError(null);
@@ -106,7 +106,7 @@ export function NovaDemandaScreen({ navigation }: Props) {
 
   return (
     <GradientBackground variant="screen" style={{ paddingTop: insets.top }}>
-      <ScreenHeader title="Nova demanda" variant="plain" onBack={() => navigation.goBack()} testID="nova-header" />
+      <ScreenHeader title="Nova demanda" variant="plain" onBack={() => router.back()} testID="nova-header" />
 
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView

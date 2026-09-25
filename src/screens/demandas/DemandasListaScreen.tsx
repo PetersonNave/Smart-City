@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { excluirDemanda, listarDemandas, type Demanda, type DemandaStatus, type ListarDemandasParams } from '../../api/demandas';
 import { useAuth } from '../../auth/AuthContext';
@@ -17,7 +17,7 @@ import { useTabBarInset } from '../../components/TabBar';
 import { Toast } from '../../components/Toast';
 import { STATUS_META, podeExcluir } from '../../domain/demanda';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import type { DemandasStackScreenProps } from '../../navigation/types';
+import { routes } from '../../navigation/routes';
 import { fonts, palette } from '../../theme';
 
 const PER_PAGE = 10;
@@ -32,9 +32,8 @@ const STATUS_OPTIONS: SegmentOption<StatusFiltro>[] = [
   })),
 ];
 
-type Props = DemandasStackScreenProps<'DemandasLista'>;
-
-export function DemandasListaScreen({ navigation }: Props) {
+export function DemandasListaScreen() {
+  const router = useRouter();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const tabBarInset = useTabBarInset();
@@ -242,7 +241,7 @@ export function DemandasListaScreen({ navigation }: Props) {
               demanda={item}
               expanded={expandedId === item.id}
               onToggle={() => setExpandedId((current) => (current === item.id ? null : item.id))}
-              onOpenDetails={() => navigation.navigate('DemandaDetalhe', { id: item.id })}
+              onOpenDetails={() => router.push(routes.demanda(item.id))}
               onDelete={podeExcluir(item, user) ? () => setToDelete(item) : undefined}
               testID={`demand-card-${item.id}`}
             />
@@ -251,7 +250,7 @@ export function DemandasListaScreen({ navigation }: Props) {
       )}
 
       <Fab
-        onPress={() => navigation.navigate('NovaDemanda')}
+        onPress={() => router.push(routes.novaDemanda)}
         accessibilityLabel="Registrar nova demanda"
         style={[styles.fab, { bottom: tabBarInset + 16 }]}
         testID="demandas-fab"

@@ -1,21 +1,36 @@
 # Telas de demandas
 
-## Navegação
+## Navegação (Expo Router)
+
+As rotas ficam em `/app` (um arquivo por tela); as telas em si continuam em `src/screens`.
 
 ```
-AppStack
- ├─ Tabs ─┬─ Início           (atalho "Registrar nova demanda")
- │        ├─ Mapa             (placeholder)
- │        ├─ Demandas (stack) ─┬─ DemandasLista
- │        │                    ├─ DemandaDetalhe
- │        │                    └─ EditarDemanda   (com tab bar, como no Figma)
- │        └─ Perfil           (placeholder)
- ├─ NovaDemanda               (sem tab bar, como no Figma)
- └─ DemandaEnviada
+app/
+ ├─ _layout.tsx               fontes, providers e proteção por sessão
+ ├─ (auth)/                   só visitantes: /login, /cadastro
+ └─ (app)/                    só usuários logados
+     ├─ (tabs)/               abas com a TabBar do Figma
+     │   ├─ index.tsx         /                       Início (atalho "Registrar nova demanda")
+     │   ├─ mapa.tsx          /mapa                   placeholder
+     │   ├─ demandas/         /demandas               lista
+     │   │                    /demandas/:id           detalhe
+     │   │                    /demandas/:id/editar    edição (com tab bar, como no Figma)
+     │   └─ perfil.tsx        /perfil                 placeholder
+     ├─ nova-demanda.tsx      /nova-demanda           sem tab bar, como no Figma
+     └─ demanda-enviada.tsx   /demanda-enviada?id=
 ```
 
-A tab bar (`src/components/TabBar`) fica sobreposta ao conteúdo. Toda tela de aba que
-rola deve reservar `useTabBarInset()` de espaço embaixo.
+- **Proteção:** o layout raiz usa `Stack.Protected` com o status do `AuthContext`. Visitante
+  que abre qualquer rota do app vê o Login; ao logar/deslogar (ou se o refresh do token
+  falhar no meio do uso) o Expo Router troca de grupo sozinho. Enquanto a sessão é
+  restaurada, aparece a tela de Loading do Figma.
+- **Parâmetros de URL são strings**: as telas recebem ids (`/demandas/7`) e buscam os dados
+  na API. Ids inválidos (`/demandas/abc`) mostram "Demanda não encontrada" sem chamar a API.
+  Os caminhos ficam centralizados em `src/navigation/routes.ts`.
+- Abrir `/demandas/:id` direto (ex.: "Acompanhar demanda") coloca a lista embaixo
+  (`initialRouteName` do layout de demandas), então "voltar" leva à lista.
+- A tab bar (`src/components/TabBar`) fica sobreposta ao conteúdo. Toda tela de aba que
+  rola deve reservar `useTabBarInset()` de espaço embaixo.
 
 ## Lista (`DemandasListaScreen`)
 
@@ -42,7 +57,8 @@ rola deve reservar `useTabBarInset()` de espaço embaixo.
 - Botão "Editar Demanda" só aparece quando o backend permitiria editar (`podeEditar`:
   cidadão só edita a própria demanda enquanto pendente; gestor edita qualquer uma).
 - Ao voltar da edição mostra "Demanda atualizada com sucesso!" e, se o endereço mudou,
-  o rótulo "Localização (atualizada)" — como no frame do Figma.
+  o rótulo "Localização (atualizada)" — como no frame do Figma. O resultado chega pela URL
+  (`router.dismissTo` volta ao detalhe que já está na pilha).
 
 ## Nova demanda (`NovaDemandaScreen`) → Demanda enviada
 

@@ -1,21 +1,20 @@
 import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type TextInput } from 'react-native';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useRouter } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { ApiValidationError } from '../../api/auth';
 import { useAuth } from '../../auth/AuthContext';
 import { AuthLayout } from '../../components/AuthLayout';
 import { Button } from '../../components/Button';
 import { TextField } from '../../components/TextField';
-import type { AuthStackParamList } from '../../navigation/AuthStack';
+import { routes } from '../../navigation/routes';
 import { colors, fonts, palette } from '../../theme';
 import { cadastroSchema, type CadastroFormValues } from './CadastroScreen.schema';
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'Cadastro'>;
-
 // Não há frame de Cadastro no Figma: segue o mesmo layout da tela de Login.
-export function CadastroScreen({ navigation }: Props) {
+export function CadastroScreen() {
+  const router = useRouter();
   const { register } = useAuth();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const emailRef = useRef<TextInput>(null);
@@ -150,7 +149,7 @@ export function CadastroScreen({ navigation }: Props) {
           testID="cadastro-submit"
         />
 
-        <Pressable testID="go-to-login" hitSlop={8} onPress={() => navigation.navigate('Login')}>
+        <Pressable testID="go-to-login" hitSlop={8} onPress={() => (router.canGoBack() ? router.back() : router.replace(routes.login))}>
           <Text style={styles.link}>
             Já tem conta? <Text style={styles.linkStrong}>Entrar</Text>
           </Text>

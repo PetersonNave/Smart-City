@@ -1,28 +1,16 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ApiValidationError } from '../../api/auth';
 import { useAuth } from '../../auth/AuthContext';
-import type { AuthStackParamList } from '../../navigation/AuthStack';
+import { createMockRouter } from '../../test-utils/mockRouter';
 import { CadastroScreen } from './CadastroScreen';
 
 jest.mock('../../auth/AuthContext');
 
-const Stack = createNativeStackNavigator<AuthStackParamList>();
-
-function LoginPlaceholder() {
-  return null;
-}
+const mockRouter = createMockRouter();
+jest.mock('expo-router', () => ({ useRouter: () => mockRouter }));
 
 function renderScreen() {
-  return render(
-    <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen name="Cadastro" component={CadastroScreen} />
-        <Stack.Screen name="Login" component={LoginPlaceholder} />
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
+  return render(<CadastroScreen />);
 }
 
 function fillValidForm() {
@@ -70,5 +58,28 @@ describe('CadastroScreen', () => {
     fireEvent.press(screen.getByTestId('cadastro-submit'));
 
     await waitFor(() => expect(screen.getByText('E-mail já cadastrado.')).toBeTruthy());
+  });
+});
+
+describe('CadastroScreen navigation', () => {
+  beforeEach(() => (useAuth as jest.Mock).mockReturnValue({ register: jest.fn() }));
+  afterEach(() => jest.clearAllMocks());
+
+  it('goes back to the login it came from', () => {
+    mockRouter.canGoBack.mockReturnValue(true);
+    renderScreen();
+
+    fireEvent.press(screen.getByTestId('go-to-login'));
+
+    expect(mockRouter.back).toHaveBeenCalled();
+  });
+
+  it('opens /login when there is nothing to go back to (deep link straight to /cadastro)', () => {
+    mockRouter.canGoBack.mockReturnValue(false);
+    renderScreen();
+
+    fireEvent.press(screen.getByTestId('go-to-login'));
+
+    expect(mockRouter.replace).toHaveBeenCalledWith('/login');
   });
 });

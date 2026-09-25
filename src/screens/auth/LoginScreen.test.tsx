@@ -1,31 +1,28 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../../auth/AuthContext';
-import type { AuthStackParamList } from '../../navigation/AuthStack';
+import { createMockRouter } from '../../test-utils/mockRouter';
 import { LoginScreen } from './LoginScreen';
 
 jest.mock('../../auth/AuthContext');
 
-const Stack = createNativeStackNavigator<AuthStackParamList>();
-
-function CadastroPlaceholder() {
-  return null;
-}
+const mockRouter = createMockRouter();
+jest.mock('expo-router', () => ({ useRouter: () => mockRouter }));
 
 function renderScreen() {
-  return render(
-    <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Cadastro" component={CadastroPlaceholder} />
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
+  return render(<LoginScreen />);
 }
 
 describe('LoginScreen', () => {
   afterEach(() => jest.clearAllMocks());
+
+  it('goes to /cadastro from the sign-up link', () => {
+    (useAuth as jest.Mock).mockReturnValue({ login: jest.fn() });
+    renderScreen();
+
+    fireEvent.press(screen.getByTestId('go-to-cadastro'));
+
+    expect(mockRouter.push).toHaveBeenCalledWith('/cadastro');
+  });
 
   it('shows validation errors for empty fields on submit', async () => {
     (useAuth as jest.Mock).mockReturnValue({ login: jest.fn() });

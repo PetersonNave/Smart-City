@@ -1,15 +1,14 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../auth/AuthContext';
 import { Button } from '../../components/Button';
-import type { AppStackParamList } from '../../navigation/types';
+import { routes } from '../../navigation/routes';
 import { colors, fonts, palette } from '../../theme';
 
 export function HomeScreen() {
   const { user, logout } = useAuth();
-  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
 
   return (
@@ -19,7 +18,7 @@ export function HomeScreen() {
       <Button
         label="Registrar nova demanda"
         icon="plus"
-        onPress={() => navigation.navigate('NovaDemanda')}
+        onPress={() => router.push(routes.novaDemanda)}
         testID="home-nova-demanda"
       />
       <Button label="Sair" variant="secondary" onPress={() => logout()} testID="home-logout" />

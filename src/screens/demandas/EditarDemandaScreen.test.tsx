@@ -1,11 +1,12 @@
 import { Alert, Text } from 'react-native';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { renderRouter } from 'expo-router/testing-library';
 import { atualizarDemanda, enviarFotoDemanda, obterDemanda } from '../../api/demandas';
 import { ApiValidationError } from '../../api/envelope';
 import { useAuth } from '../../auth/AuthContext';
 import { useCurrentAddress } from '../../hooks/useCurrentAddress';
+import { parseEditFeedback } from '../../navigation/routes';
 import { EditarDemandaScreen } from './EditarDemandaScreen';
 
 jest.mock('../../api/demandas', () => ({
@@ -52,36 +53,32 @@ const demanda = {
   photoUrl: 'http://api/fotos/atual.jpg',
 };
 
-const Stack = createNativeStackNavigator();
-
-function DetalheStub({ route }: { route: { params: { id: number; feedback?: { localizacaoAtualizada: boolean; fotoFalhou: boolean } } } }) {
-  const { feedback } = route.params;
+function DetalheStub() {
+  const params = useLocalSearchParams<Record<string, string>>();
+  const feedback = parseEditFeedback(params);
   return (
     <Text>
-      Detalhe {route.params.id}
+      Detalhe {params.id}
       {feedback ? ` loc:${feedback.localizacaoAtualizada} fotoFalhou:${feedback.fotoFalhou}` : ''}
     </Text>
   );
 }
 
-// Stack real (Detalhe → Editar) para o popTo e o bloqueio de saída funcionarem de verdade.
-function renderScreen() {
-  return render(
-    <NavigationContainer
-      initialState={{
-        index: 1,
-        routes: [
-          { name: 'DemandaDetalhe', params: { id: 7 } },
-          { name: 'EditarDemanda', params: { id: 7 } },
-        ],
-      }}
-    >
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="DemandaDetalhe" component={DetalheStub as never} />
-        <Stack.Screen name="EditarDemanda" component={EditarDemandaScreen as never} />
-      </Stack.Navigator>
-    </NavigationContainer>
+// Expo Router real (em memória): /demandas/7 → /demandas/7/editar, para o dismissTo e o
+// bloqueio de saída funcionarem como no app.
+async function renderScreen() {
+  const result = renderRouter(
+    {
+      _layout: () => <Stack screenOptions={{ headerShown: false }} />,
+      'demandas/[id]/index': DetalheStub,
+      'demandas/[id]/editar': EditarDemandaScreen,
+    },
+    { initialUrl: '/demandas/7' }
   );
+  await act(async () => {
+    router.push('/demandas/7/editar');
+  });
+  return result;
 }
 
 async function waitForForm() {
@@ -105,7 +102,7 @@ describe('EditarDemandaScreen', () => {
   });
 
   it('pre-fills the form with the current data and photo', async () => {
-    renderScreen();
+    await renderScreen();
     await waitForForm();
 
     expect(screen.getByTestId('editar-descricao-input').props.value).toBe(demanda.description);
@@ -115,7 +112,7 @@ describe('EditarDemandaScreen', () => {
   });
 
   it('PATCHes only the changed fields and returns to the detail with the feedback', async () => {
-    renderScreen();
+    await renderScreen();
     await waitForForm();
 
     fireEvent.changeText(screen.getByTestId('editar-localizacao-input'), 'Av. Brasil, 1200');
@@ -128,7 +125,7 @@ describe('EditarDemandaScreen', () => {
   });
 
   it('uploads a new photo without PATCHing when only the photo changed', async () => {
-    renderScreen();
+    await renderScreen();
     await waitForForm();
 
     fireEvent.press(screen.getByTestId('editar-foto'));
@@ -143,7 +140,7 @@ describe('EditarDemandaScreen', () => {
     (enviarFotoDemanda as jest.Mock).mockRejectedValue(
       new ApiValidationError('Arquivo muito grande.', { foto: ['A foto deve ter no máximo 8 MB.'] })
     );
-    renderScreen();
+    await renderScreen();
     await waitForForm();
 
     fireEvent.press(screen.getByTestId('editar-foto'));
@@ -155,7 +152,7 @@ describe('EditarDemandaScreen', () => {
 
   it('saves the text changes and reports the failed photo when both changed', async () => {
     (enviarFotoDemanda as jest.Mock).mockRejectedValue(new Error('Network'));
-    renderScreen();
+    await renderScreen();
     await waitForForm();
 
     fireEvent.changeText(screen.getByTestId('editar-titulo-input'), 'Semáforo quebrado');
@@ -170,7 +167,7 @@ describe('EditarDemandaScreen', () => {
     (atualizarDemanda as jest.Mock).mockRejectedValue(
       new ApiValidationError('Dados inválidos.', { titulo: ['Já existe uma demanda com este título.'] })
     );
-    renderScreen();
+    await renderScreen();
     await waitForForm();
 
     fireEvent.changeText(screen.getByTestId('editar-titulo-input'), 'Título repetido');
@@ -192,7 +189,7 @@ describe('EditarDemandaScreen', () => {
         },
       };
     });
-    renderScreen();
+    await renderScreen();
     await waitForForm();
     expect(screen.getByTestId('editar-localizacao-input').props.value).toBe('Rua XV de Novembro, 450');
 
@@ -205,7 +202,7 @@ describe('EditarDemandaScreen', () => {
   });
 
   it('cancels without asking when nothing changed, and asks after a change', async () => {
-    renderScreen();
+    await renderScreen();
     await waitForForm();
 
     fireEvent.changeText(screen.getByTestId('editar-descricao-input'), 'Descrição alterada pelo cidadão.');
@@ -219,7 +216,7 @@ describe('EditarDemandaScreen', () => {
 
   it('blocks editing when the demand is no longer pending', async () => {
     (obterDemanda as jest.Mock).mockResolvedValue({ ...demanda, status: 'IN_PROGRESS' });
-    renderScreen();
+    await renderScreen();
 
     await waitFor(() => expect(screen.getByTestId('editar-bloqueado')).toBeTruthy());
     expect(screen.queryByTestId('editar-atualizar')).toBeNull();

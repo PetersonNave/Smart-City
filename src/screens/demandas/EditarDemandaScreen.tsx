@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   atualizarDemanda,
@@ -21,12 +22,10 @@ import { useTabBarInset } from '../../components/TabBar';
 import { podeEditar } from '../../domain/demanda';
 import { useCurrentAddress } from '../../hooks/useCurrentAddress';
 import { useDiscardGuard } from '../../hooks/useDiscardGuard';
-import type { DemandaEditFeedback, DemandasStackScreenProps } from '../../navigation/types';
+import { demandaAtualizadaRoute, parseIdParam, type DemandaEditFeedback } from '../../navigation/routes';
 import { fonts, palette } from '../../theme';
 import { DemandaFormFields } from './DemandaFormFields';
 import { DEMANDA_FORM_VAZIO, editarDemandaSchema, type DemandaFormValues } from './demandaForm.schema';
-
-type Props = DemandasStackScreenProps<'EditarDemanda'>;
 
 const TEXT_FIELDS = ['titulo', 'descricao', 'categoria', 'localizacao'] as const;
 
@@ -42,8 +41,10 @@ function toFormValues(demanda: Demanda): DemandaFormValues {
 
 // Figma "Editar Demanda": mesmos campos da nova demanda, com a foto atual e os botões
 // "Cancelar" / "Atualizar". Envia só o que mudou (PATCH) e a foto nova, se houver.
-export function EditarDemandaScreen({ navigation, route }: Props) {
-  const { id } = route.params;
+export function EditarDemandaScreen() {
+  const router = useRouter();
+  // 0 = id inválido na URL: cai no erro de carregamento sem chamar a API.
+  const id = parseIdParam(useLocalSearchParams<{ id: string }>().id) ?? 0;
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const tabBarInset = useTabBarInset();
@@ -65,6 +66,10 @@ export function EditarDemandaScreen({ navigation, route }: Props) {
   });
 
   const load = useCallback(async () => {
+    if (!id) {
+      setLoadError('Demanda não encontrada.');
+      return;
+    }
     setLoadError(null);
     try {
       const current = await obterDemanda(id);
@@ -90,8 +95,9 @@ export function EditarDemandaScreen({ navigation, route }: Props) {
   useDiscardGuard(isDirty && !saved, 'Descartar alterações?', 'As alterações feitas nesta demanda serão perdidas.');
 
   useEffect(() => {
-    if (saved) navigation.popTo('DemandaDetalhe', { id, feedback: saved });
-  }, [saved, id, navigation]);
+    // Volta ao detalhe que já está na pilha, levando o resultado da edição pela URL.
+    if (saved) router.dismissTo(demandaAtualizadaRoute(id, saved));
+  }, [saved, id, router]);
 
   async function onSubmit(values: DemandaFormValues) {
     setSubmitError(null);
@@ -148,7 +154,7 @@ export function EditarDemandaScreen({ navigation, route }: Props) {
     setSaved({ at: Date.now(), localizacaoAtualizada: Boolean(changes.localizacao), fotoFalhou });
   }
 
-  const goBack = () => navigation.goBack();
+  const goBack = () => router.back();
   const canEdit = demanda ? podeEditar(demanda, user) : true;
 
   return (

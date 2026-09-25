@@ -45,7 +45,9 @@
           "cameraPermission": "O ResolveAí usa a câmera para fotografar o problema que você está registrando.",
           "recordAudioAndroid": false
         }
-      ]
-    ]
+      ],
+      "expo-router"
+    ],
+    "scheme": "resolveai"
   }
 }

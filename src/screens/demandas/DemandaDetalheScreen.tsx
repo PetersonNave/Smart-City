@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { obterDemanda, type Demanda } from '../../api/demandas';
 import { useAuth } from '../../auth/AuthContext';
@@ -13,14 +14,26 @@ import { StatusBadge } from '../../components/StatusBadge';
 import { useTabBarInset } from '../../components/TabBar';
 import { Toast } from '../../components/Toast';
 import { CATEGORIA_LABELS, STATUS_META, formatarData, formatarProtocolo, podeEditar } from '../../domain/demanda';
-import type { DemandasStackScreenProps } from '../../navigation/types';
+import { parseEditFeedback, parseIdParam, routes } from '../../navigation/routes';
 import { colors, fonts, palette } from '../../theme';
 
-type Props = DemandasStackScreenProps<'DemandaDetalhe'>;
-
 // Figma "Detalhe da Demanda" e o estado após editar ("Demanda atualizada com sucesso!").
-export function DemandaDetalheScreen({ navigation, route }: Props) {
-  const { id, feedback } = route.params;
+export function DemandaDetalheScreen() {
+  const router = useRouter();
+  const params = useLocalSearchParams<{
+    id: string;
+    atualizada?: string;
+    localizacaoAtualizada?: string;
+    fotoFalhou?: string;
+  }>();
+  // 0 = id inválido na URL (ex.: /demandas/abc): vira "não encontrada" sem chamar a API.
+  const id = parseIdParam(params.id) ?? 0;
+  // O feedback da edição chega pela URL (`atualizada` muda a cada edição salva).
+  const { atualizada, localizacaoAtualizada, fotoFalhou } = params;
+  const feedback = useMemo(
+    () => parseEditFeedback({ atualizada, localizacaoAtualizada, fotoFalhou }),
+    [atualizada, localizacaoAtualizada, fotoFalhou]
+  );
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const tabBarInset = useTabBarInset();
@@ -30,6 +43,10 @@ export function DemandaDetalheScreen({ navigation, route }: Props) {
   const [toast, setToast] = useState<{ message: string; tone: 'success' | 'warning' } | null>(null);
 
   const load = useCallback(async () => {
+    if (!id) {
+      setError('Demanda não encontrada.');
+      return;
+    }
     setError(null);
     try {
       setDemanda(await obterDemanda(id));
@@ -66,7 +83,7 @@ export function DemandaDetalheScreen({ navigation, route }: Props) {
     }
   }
 
-  const goBack = () => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate('DemandasLista'));
+  const goBack = () => (router.canGoBack() ? router.back() : router.replace(routes.demandas));
 
   return (
     <GradientBackground variant="screen" style={{ paddingTop: insets.top }}>
@@ -150,7 +167,7 @@ export function DemandaDetalheScreen({ navigation, route }: Props) {
               icon="pencil"
               variant="outline"
               radius={15}
-              onPress={() => navigation.navigate('EditarDemanda', { id: demanda.id })}
+              onPress={() => router.push(routes.editarDemanda(demanda.id))}
               style={styles.editButton}
               testID="detalhe-editar"
             />

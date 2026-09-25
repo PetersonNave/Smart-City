@@ -7,7 +7,7 @@ Este repositório contém apenas o front-end mobile. Ele consome a **mesma API**
 ## 1 Tecnologias Utilizadas
 
 * **Framework:** Expo (React Native) com TypeScript
-* **Navegação:** React Navigation (`native-stack` para Login/Cadastro e fluxos, `bottom-tabs` com tab bar customizada do Figma na área logada)
+* **Navegação:** Expo Router (rotas por arquivo em `/app`; `Stack.Protected` separa as telas de visitante e de usuário logado; abas com a tab bar customizada do Figma)
 * **Estilização:** StyleSheet do React Native + tokens em `src/theme` (cores, neutros e tipografia extraídos do Figma)
 * **Gerenciamento de Estado:** Context API (`src/auth/AuthContext.tsx`) para a sessão do usuário; estado de tela local nas demais telas
 * **Formulários:** react-hook-form + zod
@@ -72,7 +72,8 @@ Organização de pastas:
 * `/src/components`: Componentes reutilizáveis de UI (Button, TextField, SelectField, PhotoField, DemandCard, StatusBadge, TabBar, ConfirmModal, Toast...)
 * `/src/domain`: Regras e formatação de domínio (rótulos de categoria/status, datas, protocolo, permissão de exclusão)
 * `/src/hooks`: Hooks reutilizáveis (ex.: endereço atual via GPS)
-* `/src/navigation`: Árvore de navegação (Loading, Auth, App → Tabs + fluxo de nova demanda)
+* `/app`: Rotas do Expo Router (cada arquivo é uma tela/URL; os `_layout.tsx` definem pilhas, abas e a proteção por login)
+* `/src/navigation`: Helpers de rota (caminhos e leitura dos parâmetros de URL)
 * `/src/screens`: Telas do aplicativo
 * `/src/theme`: Cores e tipografia
 

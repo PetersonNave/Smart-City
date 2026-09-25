@@ -1,5 +1,6 @@
 import { Alert } from 'react-native';
-import { useNavigation, usePreventRemove } from '@react-navigation/native';
+import { useNavigation } from 'expo-router';
+import { usePreventRemove } from 'expo-router/react-navigation';
 
 /**
  * Enquanto `shouldConfirm` for true, sair da tela (botão voltar, gesto do iOS ou botão

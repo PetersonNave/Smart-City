@@ -1,10 +1,18 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { obterDemanda } from '../../api/demandas';
 import { useAuth } from '../../auth/AuthContext';
+import { createMockRouter } from '../../test-utils/mockRouter';
 import { DemandaDetalheScreen } from './DemandaDetalheScreen';
 
 jest.mock('../../api/demandas');
 jest.mock('../../auth/AuthContext');
+
+const mockRouter = createMockRouter();
+let mockParams: Record<string, string> = {};
+jest.mock('expo-router', () => ({
+  useRouter: () => mockRouter,
+  useLocalSearchParams: () => mockParams,
+}));
 
 const demanda = {
   id: 187,
@@ -19,13 +27,9 @@ const demanda = {
   photoUrl: null,
 };
 
-function makeNavigation() {
-  return { goBack: jest.fn(), canGoBack: () => true, navigate: jest.fn() };
-}
-
-function renderScreen(params: object = { id: 187 }, navigation = makeNavigation()) {
-  const utils = render(<DemandaDetalheScreen navigation={navigation as never} route={{ params } as never} />);
-  return { ...utils, navigation };
+function renderScreen(params: Record<string, string> = { id: '187' }) {
+  mockParams = params;
+  return render(<DemandaDetalheScreen />);
 }
 
 describe('DemandaDetalheScreen', () => {
@@ -59,10 +63,10 @@ describe('DemandaDetalheScreen', () => {
 
   it('goes back from the header', async () => {
     (obterDemanda as jest.Mock).mockResolvedValue(demanda);
-    const { navigation } = renderScreen();
+    renderScreen();
 
     fireEvent.press(screen.getByTestId('detalhe-header-back'));
-    expect(navigation.goBack).toHaveBeenCalled();
+    expect(mockRouter.back).toHaveBeenCalled();
     await waitFor(() => expect(screen.getByTestId('detalhe-card')).toBeTruthy());
   });
 
@@ -95,12 +99,12 @@ describe('DemandaDetalheScreen', () => {
 
   it('offers "Editar Demanda" on a pending demand and opens the edit screen', async () => {
     (obterDemanda as jest.Mock).mockResolvedValue(demanda);
-    const { navigation } = renderScreen();
+    renderScreen();
 
     await waitFor(() => expect(screen.getByTestId('detalhe-editar')).toBeTruthy());
     fireEvent.press(screen.getByTestId('detalhe-editar'));
 
-    expect(navigation.navigate).toHaveBeenCalledWith('EditarDemanda', { id: 187 });
+    expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/demandas/[id]/editar', params: { id: '187' } });
   });
 
   it('hides "Editar Demanda" once the demand left pending (citizen)', async () => {
@@ -115,7 +119,7 @@ describe('DemandaDetalheScreen', () => {
   it('shows the Figma success toast and "(atualizada)" label after an edit', async () => {
     (obterDemanda as jest.Mock).mockResolvedValue({ ...demanda, location: 'Av. Brasil, 1200' });
 
-    renderScreen({ id: 187, feedback: { at: 1, localizacaoAtualizada: true, fotoFalhou: false } });
+    renderScreen({ id: '187', atualizada: '1', localizacaoAtualizada: '1', fotoFalhou: '0' });
 
     await waitFor(() => expect(screen.getByText('Demanda atualizada com sucesso!')).toBeTruthy());
     await waitFor(() => expect(screen.getByText('Av. Brasil, 1200')).toBeTruthy());
@@ -125,10 +129,28 @@ describe('DemandaDetalheScreen', () => {
   it('warns when the edit was saved but the photo upload failed', async () => {
     (obterDemanda as jest.Mock).mockResolvedValue(demanda);
 
-    renderScreen({ id: 187, feedback: { at: 2, localizacaoAtualizada: false, fotoFalhou: true } });
+    renderScreen({ id: '187', atualizada: '2', localizacaoAtualizada: '0', fotoFalhou: '1' });
 
     await waitFor(() =>
       expect(screen.getByText('Demanda atualizada, mas a foto não pôde ser enviada.')).toBeTruthy()
     );
+  });
+
+  it('goes to the list when opened directly without history (deep link)', async () => {
+    (obterDemanda as jest.Mock).mockResolvedValue(demanda);
+    mockRouter.canGoBack.mockReturnValueOnce(false);
+    renderScreen();
+
+    fireEvent.press(screen.getByTestId('detalhe-header-back'));
+
+    expect(mockRouter.replace).toHaveBeenCalledWith('/demandas');
+    await waitFor(() => expect(screen.getByTestId('detalhe-card')).toBeTruthy());
+  });
+
+  it('shows an error for an invalid id in the URL without calling the API', async () => {
+    renderScreen({ id: 'abc' });
+
+    await waitFor(() => expect(screen.getByTestId('detalhe-error')).toBeTruthy());
+    expect(obterDemanda).not.toHaveBeenCalled();
   });
 });

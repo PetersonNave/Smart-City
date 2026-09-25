@@ -2,18 +2,17 @@ import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type TextInput } from 'react-native';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { AuthStackParamList } from '../../navigation/AuthStack';
+import { useRouter } from 'expo-router';
 import { AuthLayout } from '../../components/AuthLayout';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
 import { useAuth } from '../../auth/AuthContext';
+import { routes } from '../../navigation/routes';
 import { colors, fonts, palette } from '../../theme';
 import { loginSchema, type LoginFormValues } from './LoginScreen.schema';
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
-
-export function LoginScreen({ navigation }: Props) {
+export function LoginScreen() {
+  const router = useRouter();
   const { login } = useAuth();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const passwordRef = useRef<TextInput>(null);
@@ -93,7 +92,7 @@ export function LoginScreen({ navigation }: Props) {
           testID="login-submit"
         />
 
-        <Pressable testID="go-to-cadastro" hitSlop={8} onPress={() => navigation.navigate('Cadastro')}>
+        <Pressable testID="go-to-cadastro" hitSlop={8} onPress={() => router.push(routes.cadastro)}>
           <Text style={styles.link}>
             Não tem conta? <Text style={styles.linkStrong}>Cadastre-se</Text>
           </Text>
