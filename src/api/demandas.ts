@@ -40,6 +40,8 @@ export type Paginacao = {
 };
 
 export type ListarDemandasParams = {
+  /** Busca em título, descrição e localização (o backend ignora maiúsculas e acentos). */
+  q?: string;
   page?: number;
   per_page?: number;
   status?: DemandaStatus;

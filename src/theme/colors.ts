@@ -37,6 +37,7 @@ export const palette = {
   successSoft: '#E8F5E9',
   successIconSoft: 'rgba(46, 158, 91, 0.1)',
   headerButton: 'rgba(255, 255, 255, 0.15)',
+  segmentActiveText: '#1B4E5B',
   overlay: 'rgba(28, 45, 66, 0.45)',
 } as const;
 

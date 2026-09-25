@@ -103,7 +103,7 @@ A documentação completa da API (compartilhada com a aplicação web) pode ser 
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| `GET` | `/api/demandas` | Lista todas as demandas (com filtros e paginação) |
+| `GET` | `/api/demandas` | Lista as demandas com paginação, busca (`q`) e filtros (`status`, `categoria`, `prioridade`) |
 | `POST` | `/api/demandas` | Cidadão cria uma nova solicitação urbana |
 | `GET` | `/api/demandas/{id}` | Retorna os detalhes de uma demanda específica |
 | `PATCH` | `/api/demandas/{id}` | Atualiza status ou prioridade da demanda |

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { excluirDemanda, listarDemandas, type Demanda } from '../../api/demandas';
 import { useAuth } from '../../auth/AuthContext';
 import { DemandasListaScreen } from './DemandasListaScreen';
@@ -102,5 +102,80 @@ describe('DemandasListaScreen', () => {
 
     expect(navigation.navigate).toHaveBeenCalledWith('DemandaDetalhe', { id: 5 });
     expect(navigation.navigate).toHaveBeenCalledWith('NovaDemanda');
+  });
+});
+
+describe('DemandasListaScreen search and filters', () => {
+  beforeEach(() => {
+    (useAuth as jest.Mock).mockReturnValue({ user: { id: 1, role: 'cidadao', name: 'Ana' } });
+  });
+  afterEach(() => jest.clearAllMocks());
+
+  it('searches on the server after the user stops typing', async () => {
+    (listarDemandas as jest.Mock).mockResolvedValue({ demandas: [makeDemanda({ id: 1 })], paginacao });
+    renderScreen();
+    await waitFor(() => expect(screen.getByTestId('demand-card-1')).toBeTruthy());
+
+    fireEvent.changeText(screen.getByTestId('demandas-busca-input'), '  semaforo ');
+
+    await waitFor(() =>
+      expect(listarDemandas).toHaveBeenLastCalledWith({ q: 'semaforo', status: undefined, page: 1, per_page: 10 })
+    );
+    // Só uma busca para o termo final (debounce), além da carga inicial.
+    expect(listarDemandas).toHaveBeenCalledTimes(2);
+  });
+
+  it('filters by status through the segmented control', async () => {
+    (listarDemandas as jest.Mock).mockResolvedValue({ demandas: [makeDemanda({ id: 1 })], paginacao });
+    renderScreen();
+    await waitFor(() => expect(screen.getByTestId('demand-card-1')).toBeTruthy());
+
+    fireEvent.press(screen.getByTestId('demandas-status-RESOLVED'));
+
+    await waitFor(() =>
+      expect(listarDemandas).toHaveBeenLastCalledWith({ q: undefined, status: 'RESOLVED', page: 1, per_page: 10 })
+    );
+    expect(screen.getByTestId('demandas-status-RESOLVED').props.accessibilityState).toEqual({ selected: true });
+  });
+
+  it('shows a "no results" state with a button that clears the filters', async () => {
+    (listarDemandas as jest.Mock)
+      .mockResolvedValueOnce({ demandas: [makeDemanda({ id: 1 })], paginacao })
+      .mockResolvedValue({ demandas: [], paginacao: { ...paginacao, total: 0 } });
+    renderScreen();
+    await waitFor(() => expect(screen.getByTestId('demand-card-1')).toBeTruthy());
+
+    fireEvent.press(screen.getByTestId('demandas-status-REJECTED'));
+
+    await waitFor(() => expect(screen.getByTestId('demandas-sem-resultado')).toBeTruthy());
+    expect(screen.getByText(/com status recusada/)).toBeTruthy();
+
+    (listarDemandas as jest.Mock).mockResolvedValue({ demandas: [makeDemanda({ id: 1 })], paginacao });
+    fireEvent.press(screen.getByTestId('demandas-limpar-filtros'));
+
+    await waitFor(() => expect(screen.getByTestId('demand-card-1')).toBeTruthy());
+    expect(listarDemandas).toHaveBeenLastCalledWith({ q: undefined, status: undefined, page: 1, per_page: 10 });
+  });
+
+  it('ignores a slow response from an older search that arrives after a newer one', async () => {
+    let resolveOld: (value: unknown) => void = () => {};
+    (listarDemandas as jest.Mock)
+      .mockResolvedValueOnce({ demandas: [makeDemanda({ id: 1 })], paginacao })
+      .mockImplementationOnce(() => new Promise((resolve) => (resolveOld = resolve)))
+      .mockResolvedValueOnce({ demandas: [makeDemanda({ id: 3, title: 'Resultado novo' })], paginacao });
+    renderScreen();
+    await waitFor(() => expect(screen.getByTestId('demand-card-1')).toBeTruthy());
+
+    fireEvent.press(screen.getByTestId('demandas-status-PENDING'));
+    await waitFor(() => expect(listarDemandas).toHaveBeenCalledTimes(2));
+    fireEvent.press(screen.getByTestId('demandas-status-RESOLVED'));
+    await waitFor(() => expect(screen.getByText('Resultado novo')).toBeTruthy());
+
+    await act(async () => {
+      resolveOld({ demandas: [makeDemanda({ id: 2, title: 'Resultado antigo' })], paginacao });
+    });
+
+    expect(screen.queryByText('Resultado antigo')).toBeNull();
+    expect(screen.getByText('Resultado novo')).toBeTruthy();
   });
 });

@@ -23,6 +23,11 @@ rola deve reservar `useTabBarInset()` de espaço embaixo.
   gestor vê todas (o título muda para "Analisar Demandas" no caso do gestor).
 - Recarrega ao voltar o foco para a aba (ex.: depois de criar uma demanda), tem
   pull-to-refresh e carrega a próxima página ao chegar no fim da lista.
+- **Pesquisa:** campo de busca (título, descrição ou endereço; o backend ignora maiúsculas
+  e acentos) com debounce de 400 ms, e filtro de status no controle segmentado do Figma
+  (Todas / Pendente / Em análise / Concluída / Recusada). Busca e filtro rodam no servidor
+  (`GET /api/demandas?q=&status=`), então funcionam com a paginação. Respostas de buscas
+  antigas que chegam atrasadas são descartadas. Sem resultado, mostra "Limpar filtros".
 - Cada card mostra a foto da demanda (ou o ícone da categoria, se não houver foto ou ela
   não carregar). Tocar no card expande categoria + descrição; o link expandido abre o detalhe.
 - Lixeira: aparece só quando o backend permitiria excluir (`podeExcluir`: cidadão só
