@@ -39,3 +39,9 @@ console.error = (...args) => {
   }
   originalConsoleError(...args);
 };
+
+// O demandStore (Zustand) é global: cada teste começa com a lista/filtros/cache vazios.
+beforeEach(() => {
+  const store = jest.requireActual('./src/stores/demandStore');
+  store.useDemandStore.getState().reset();
+});

@@ -88,6 +88,12 @@ export async function atualizarDemanda(id: number, input: EditarDemandaInput): P
   return data.demanda;
 }
 
+/** Exclusivo do gestor: o backend responde 403 se um cidadão tentar alterar o status. */
+export async function atualizarStatusDemanda(id: number, status: DemandaStatus): Promise<Demanda> {
+  const data = await unwrap(apiClient.patch<ApiEnvelope<{ demanda: Demanda }>>(`/api/demandas/${id}`, { status }));
+  return data.demanda;
+}
+
 // Upload pode levar mais que o timeout padrão em rede móvel lenta.
 const PHOTO_UPLOAD_TIMEOUT_MS = 60000;
 

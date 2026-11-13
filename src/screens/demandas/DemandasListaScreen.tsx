@@ -1,8 +1,8 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { excluirDemanda, listarDemandas, type Demanda, type DemandaStatus, type ListarDemandasParams } from '../../api/demandas';
+import { type Demanda, type DemandaStatus } from '../../api/demandas';
 import { useAuth } from '../../auth/AuthContext';
 import { Button } from '../../components/Button';
 import { ConfirmModal } from '../../components/ConfirmModal';
@@ -18,9 +18,8 @@ import { Toast } from '../../components/Toast';
 import { STATUS_META, podeExcluir } from '../../domain/demanda';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { routes } from '../../navigation/routes';
+import { useDemandStore } from '../../stores/demandStore';
 import { fonts, palette } from '../../theme';
-
-const PER_PAGE = 10;
 
 type StatusFiltro = 'TODAS' | DemandaStatus;
 
@@ -38,62 +37,37 @@ export function DemandasListaScreen() {
   const insets = useSafeAreaInsets();
   const tabBarInset = useTabBarInset();
 
-  const [demandas, setDemandas] = useState<Demanda[]>([]);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [hasNextPage, setHasNextPage] = useState(false);
+  // Lista, filtros e paginação ficam no store global: sobrevivem à troca de abas e são
+  // atualizados pelo detalhe/edição (ex.: o gestor muda o status e a lista já reflete).
+  const demandas = useDemandStore((state) => state.items);
+  const status = useDemandStore((state) => state.listStatus);
+  const loadError = useDemandStore((state) => state.listError);
+  const isLoadingMore = useDemandStore((state) => state.isLoadingMore);
+  const isFiltering = useDemandStore((state) => state.isFiltering);
+  const filtros = useDemandStore((state) => state.filters);
+  const { loadFirstPage, retryFirstLoad, loadMore, setFilters, clearFilters, remove, setListError } =
+    useDemandStore.getState();
+
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [toDelete, setToDelete] = useState<Demanda | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const hasLoadedOnce = useRef(false);
 
-  // Busca (com debounce, para não chamar a API a cada tecla) e filtro de status, aplicados no backend.
-  const [busca, setBusca] = useState('');
-  const [statusFiltro, setStatusFiltro] = useState<StatusFiltro>('TODAS');
-  const [isFiltering, setIsFiltering] = useState(false);
+  // Busca com debounce, para não chamar a API a cada tecla.
+  const [busca, setBusca] = useState(filtros.q ?? '');
   const q = useDebouncedValue(busca.trim(), 400);
-  const filtros = useMemo<ListarDemandasParams>(
-    () => ({ q: q || undefined, status: statusFiltro === 'TODAS' ? undefined : statusFiltro }),
-    [q, statusFiltro]
-  );
-  const hasFilters = Boolean(filtros.q || filtros.status);
-  // Cada busca ganha um número; respostas de buscas antigas que chegarem depois são descartadas.
-  const requestSeq = useRef(0);
-
-  const loadFirstPage = useCallback(async () => {
-    const seq = ++requestSeq.current;
-    setIsFiltering(hasLoadedOnce.current);
-    try {
-      const result = await listarDemandas({ ...filtros, page: 1, per_page: PER_PAGE });
-      if (seq !== requestSeq.current) return;
-      setDemandas(result.demandas);
-      setPage(1);
-      setHasNextPage(result.paginacao.tem_proxima);
-      setLoadError(null);
-      setStatus('ready');
-      hasLoadedOnce.current = true;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Não foi possível carregar as demandas.';
-      if (seq !== requestSeq.current) return;
-      setLoadError(message);
-      // Numa atualização em segundo plano, mantém a lista antiga visível (erro vira aviso em linha).
-      if (!hasLoadedOnce.current) {
-        setStatus('error');
-      }
-    } finally {
-      if (seq === requestSeq.current) setIsFiltering(false);
-    }
-  }, [filtros]);
+  useEffect(() => {
+    if ((q || undefined) !== useDemandStore.getState().filters.q) setFilters({ q: q || undefined });
+  }, [q, setFilters]);
+  const statusFiltro: StatusFiltro = filtros.status ?? 'TODAS';
+  const hasFilters = Boolean(filtros.q || filtros.status || filtros.categoria);
 
   // Recarrega quando a aba volta ao foco (ex.: depois de registrar uma demanda) e quando os filtros mudam.
   useFocusEffect(
     useCallback(() => {
       loadFirstPage();
-    }, [loadFirstPage])
+    }, [filtros, loadFirstPage])
   );
 
   async function handleRefresh() {
@@ -102,37 +76,15 @@ export function DemandasListaScreen() {
     setIsRefreshing(false);
   }
 
-  async function handleLoadMore() {
-    if (!hasNextPage || isLoadingMore || status !== 'ready') return;
-    setIsLoadingMore(true);
-    const seq = requestSeq.current;
-    try {
-      const nextPage = page + 1;
-      const result = await listarDemandas({ ...filtros, page: nextPage, per_page: PER_PAGE });
-      if (seq !== requestSeq.current) return;
-      setDemandas((current) => {
-        const known = new Set(current.map((item) => item.id));
-        return [...current, ...result.demandas.filter((item) => !known.has(item.id))];
-      });
-      setPage(nextPage);
-      setHasNextPage(result.paginacao.tem_proxima);
-    } catch {
-      // Falha ao paginar não derruba a lista; o usuário pode rolar de novo para tentar.
-    } finally {
-      setIsLoadingMore(false);
-    }
-  }
-
   async function handleConfirmDelete() {
     if (!toDelete) return;
     setIsDeleting(true);
     try {
-      await excluirDemanda(toDelete.id);
-      setDemandas((current) => current.filter((item) => item.id !== toDelete.id));
+      await remove(toDelete.id);
       setToast('Demanda excluída com sucesso!');
-      setLoadError(null);
+      setListError(null);
     } catch (error) {
-      setLoadError(error instanceof Error ? error.message : 'Não foi possível excluir a demanda.');
+      setListError(error instanceof Error ? error.message : 'Não foi possível excluir a demanda.');
     } finally {
       setIsDeleting(false);
       setToDelete(null);
@@ -157,7 +109,7 @@ export function DemandasListaScreen() {
           <SegmentedControl
             options={STATUS_OPTIONS}
             value={statusFiltro}
-            onChange={setStatusFiltro}
+            onChange={(value) => setFilters({ status: value === 'TODAS' ? undefined : value })}
             accessibilityLabel="Filtrar por status"
             testID="demandas-status"
           />
@@ -187,10 +139,7 @@ export function DemandasListaScreen() {
           <Button
             label="Tentar novamente"
             variant="surface"
-            onPress={() => {
-              setStatus('loading');
-              loadFirstPage();
-            }}
+            onPress={retryFirstLoad}
             testID="demandas-retry"
           />
         </View>
@@ -205,7 +154,7 @@ export function DemandasListaScreen() {
             <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={palette.white} />
           }
           onEndReachedThreshold={0.3}
-          onEndReached={handleLoadMore}
+          onEndReached={loadMore}
           ListFooterComponent={isLoadingMore ? <Loading color={palette.white} size="small" /> : null}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
@@ -222,7 +171,7 @@ export function DemandasListaScreen() {
                   variant="surface"
                   onPress={() => {
                     setBusca('');
-                    setStatusFiltro('TODAS');
+                    clearFilters();
                   }}
                   testID="demandas-limpar-filtros"
                 />

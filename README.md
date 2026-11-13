@@ -9,7 +9,8 @@ Este repositório contém apenas o front-end mobile. Ele consome a **mesma API**
 * **Framework:** Expo (React Native) com TypeScript
 * **Navegação:** Expo Router (rotas por arquivo em `/app`; `Stack.Protected` separa as telas de visitante e de usuário logado; abas com a tab bar customizada do Figma)
 * **Estilização:** StyleSheet do React Native + tokens em `src/theme` (cores, neutros e tipografia extraídos do Figma)
-* **Gerenciamento de Estado:** Context API (`src/auth/AuthContext.tsx`) para a sessão do usuário; estado de tela local nas demais telas
+* **Gerenciamento de Estado global:** Context API (`src/auth/AuthContext.tsx`, o *auth store*: sessão, usuário e perfil) e Zustand (`src/stores/demandStore.ts`: lista de demandas, filtros, paginação e cache por id, compartilhados entre lista, detalhe, edição e criação)
+* **Perfis:** Cidadão (registra e acompanha as próprias demandas) e Gestor Público (vê todas, altera o status). O perfil vem da API (`role`) e é exibido na Home e na aba Perfil
 * **Formulários:** react-hook-form + zod
 * **Recursos do aparelho:** `expo-camera` (câmera do app para fotografar a demanda), `expo-image-picker` (foto da galeria) e `expo-location` (endereço via GPS)
 * **Dados:** Integração com o back-end Flask (mesma API consumida pela aplicação web)
@@ -68,7 +69,8 @@ O Expo expõe ao código do app apenas variáveis com o prefixo `EXPO_PUBLIC_`. 
 Organização de pastas:
 
 * `/src/api`: Cliente HTTP (Axios com refresh de token), envelope de resposta e chamadas de autenticação e demandas
-* `/src/auth`: Estado global de sessão (Context) e armazenamento seguro de tokens
+* `/src/auth`: Estado global de sessão (Context) e armazenamento seguro de tokens (SecureStore)
+* `/src/stores`: Estado global das demandas (Zustand)
 * `/src/components`: Componentes reutilizáveis de UI (Button, TextField, SelectField, PhotoField, DemandCard, StatusBadge, TabBar, ConfirmModal, Toast...)
 * `/src/domain`: Regras e formatação de domínio (rótulos de categoria/status, datas, protocolo, permissão de exclusão)
 * `/src/hooks`: Hooks reutilizáveis (ex.: endereço atual via GPS)

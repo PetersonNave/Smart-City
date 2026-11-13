@@ -23,6 +23,7 @@ import { podeEditar } from '../../domain/demanda';
 import { useCurrentAddress } from '../../hooks/useCurrentAddress';
 import { useDiscardGuard } from '../../hooks/useDiscardGuard';
 import { demandaAtualizadaRoute, parseIdParam, type DemandaEditFeedback } from '../../navigation/routes';
+import { useDemandStore } from '../../stores/demandStore';
 import { fonts, palette } from '../../theme';
 import { DemandaFormFields } from './DemandaFormFields';
 import { DEMANDA_FORM_VAZIO, editarDemandaSchema, type DemandaFormValues } from './demandaForm.schema';
@@ -112,7 +113,7 @@ export function EditarDemandaScreen() {
 
     try {
       if (Object.keys(changes).length > 0) {
-        await atualizarDemanda(id, changes);
+        useDemandStore.getState().upsert(await atualizarDemanda(id, changes));
       }
     } catch (error) {
       if (error instanceof ApiValidationError) {
@@ -134,7 +135,7 @@ export function EditarDemandaScreen() {
     let fotoFalhou = false;
     if (values.foto) {
       try {
-        await enviarFotoDemanda(id, values.foto);
+        useDemandStore.getState().upsert(await enviarFotoDemanda(id, values.foto));
       } catch (error) {
         // Sem nenhuma outra alteração salva, o erro da foto fica na própria tela.
         if (Object.keys(changes).length === 0) {

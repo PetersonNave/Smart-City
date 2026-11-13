@@ -8,6 +8,12 @@ import {
   logout as apiLogout,
   type AuthUser,
 } from '../api/auth';
+import { useDemandStore } from '../stores/demandStore';
+
+// Ao trocar de sessão, nada da conta anterior pode continuar em cache (demandas, filtros).
+function clearSessionData() {
+  useDemandStore.getState().reset();
+}
 
 export type AuthStatus = 'bootstrapping' | 'guest' | 'authenticated';
 
@@ -56,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Se o interceptor do axios falhar ao renovar o token em qualquer
     // chamada futura, força o app de volta pro estado deslogado.
     setOnRefreshFailure(() => {
+      clearSessionData();
       setUser(null);
       setStatus('guest');
     });
@@ -65,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     const result = await apiLogin({ email, password });
     await setStoredTokens({ accessToken: result.access_token, refreshToken: result.refresh_token });
+    clearSessionData();
     setUser(result.user);
     setStatus('authenticated');
   }, []);
@@ -85,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Sem rede ou token já expirado: os tokens locais são limpos de todo modo.
     }
     await clearStoredTokens();
+    clearSessionData();
     setUser(null);
     setStatus('guest');
   }, []);

@@ -1,5 +1,3 @@
-import { PlaceholderScreen } from '../../../src/screens/home/PlaceholderScreen';
+import { PerfilScreen } from '../../../src/screens/perfil/PerfilScreen';
 
-export default function PerfilScreen() {
-  return <PlaceholderScreen title="Perfil" />;
-}
+export default PerfilScreen;

@@ -29,6 +29,24 @@ export const STATUS_META: Record<DemandaStatus, { label: string; color: string; 
   REJECTED: { label: 'Recusada', color: palette.danger, background: palette.dangerSoft },
 };
 
+export const STATUS_ORDEM: DemandaStatus[] = ['PENDING', 'IN_PROGRESS', 'RESOLVED', 'REJECTED'];
+
+export const STATUS_OPTIONS = STATUS_ORDEM.map((value) => ({ value, label: STATUS_META[value].label }));
+
+/** Perfis de acesso devolvidos pela API (`role`). */
+export const PERFIL_LABELS: Record<string, string> = {
+  cidadao: 'Cidadão',
+  gestor: 'Gestor Público',
+};
+
+export function perfilLabel(role: string | undefined | null): string {
+  return (role && PERFIL_LABELS[role]) || 'Cidadão';
+}
+
+export function isGestor(user: Pick<AuthUser, 'role'> | null | undefined): boolean {
+  return user?.role === 'gestor';
+}
+
 /** O backend devolve datas UTC sem sufixo de fuso ("2026-10-15T13:20:00"). */
 function parseApiDate(value: string): Date {
   const hasTimezone = /[zZ]|[+-]\d{2}:?\d{2}$/.test(value);
@@ -56,7 +74,7 @@ export function formatarProtocolo(demanda: Pick<Demanda, 'id' | 'createdAt'>): s
  * cidadão só exclui as próprias enquanto estão pendentes.
  */
 export function podeExcluir(demanda: Pick<Demanda, 'status'>, user: Pick<AuthUser, 'role'> | null): boolean {
-  if (user?.role === 'gestor') return true;
+  if (isGestor(user)) return true;
   return demanda.status === 'PENDING';
 }
 

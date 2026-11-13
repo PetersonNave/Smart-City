@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import { obterDemanda } from '../../api/demandas';
+import { atualizarStatusDemanda, obterDemanda } from '../../api/demandas';
 import { useAuth } from '../../auth/AuthContext';
 import { createMockRouter } from '../../test-utils/mockRouter';
 import { DemandaDetalheScreen } from './DemandaDetalheScreen';
@@ -152,5 +152,30 @@ describe('DemandaDetalheScreen', () => {
 
     await waitFor(() => expect(screen.getByTestId('detalhe-error')).toBeTruthy());
     expect(obterDemanda).not.toHaveBeenCalled();
+  });
+
+  it('does not offer the status change to citizens', async () => {
+    (obterDemanda as jest.Mock).mockResolvedValue(demanda);
+
+    renderScreen();
+
+    await waitFor(() => expect(screen.getByText('Semáforo danificado')).toBeTruthy());
+    expect(screen.queryByTestId('detalhe-gestor')).toBeNull();
+  });
+
+  it('lets the public manager change the status', async () => {
+    (useAuth as jest.Mock).mockReturnValue({ user: { id: 9, role: 'gestor', name: 'Gestora' } });
+    (obterDemanda as jest.Mock).mockResolvedValue(demanda);
+    (atualizarStatusDemanda as jest.Mock).mockResolvedValue({ ...demanda, status: 'IN_PROGRESS' });
+
+    renderScreen();
+
+    await waitFor(() => expect(screen.getByTestId('detalhe-gestor')).toBeTruthy());
+    fireEvent.press(screen.getByTestId('detalhe-status-trigger'));
+    fireEvent.press(screen.getByTestId('detalhe-status-option-IN_PROGRESS'));
+
+    await waitFor(() => expect(atualizarStatusDemanda).toHaveBeenCalledWith(187, 'IN_PROGRESS'));
+    await waitFor(() => expect(screen.getByText('Status alterado para "Em análise".')).toBeTruthy());
+    expect(screen.getAllByText('EM ANÁLISE').length).toBeGreaterThan(0);
   });
 });

@@ -14,6 +14,7 @@ import { STATUS_META } from '../../domain/demanda';
 import { useCurrentAddress, type AddressStatus } from '../../hooks/useCurrentAddress';
 import { useDiscardGuard } from '../../hooks/useDiscardGuard';
 import { routes } from '../../navigation/routes';
+import { useDemandStore } from '../../stores/demandStore';
 import { fonts, palette } from '../../theme';
 import { DemandaFormFields } from './DemandaFormFields';
 import { DEMANDA_FORM_VAZIO, novaDemandaSchema, type DemandaFormValues } from './demandaForm.schema';
@@ -98,8 +99,10 @@ export function NovaDemandaScreen() {
     // a foto pode ser reenviada pela edição (em vez de deixar o usuário reenviar tudo).
     try {
       const comFoto = await enviarFotoDemanda(demanda.id, values.foto!);
+      useDemandStore.getState().upsert(comFoto);
       setCreated({ demanda: comFoto, fotoPendente: false });
     } catch {
+      useDemandStore.getState().upsert(demanda);
       setCreated({ demanda, fotoPendente: true });
     }
   }

@@ -2,19 +2,29 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { obterDemanda, type Demanda } from '../../api/demandas';
+import { type Demanda, type DemandaStatus } from '../../api/demandas';
 import { useAuth } from '../../auth/AuthContext';
 import { Button } from '../../components/Button';
 import { DemandThumb } from '../../components/DemandThumb';
 import { GradientBackground } from '../../components/GradientBackground';
 import { Icon } from '../../components/Icon';
 import { Loading } from '../../components/Loading';
+import { SelectField } from '../../components/SelectField';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusBadge } from '../../components/StatusBadge';
 import { useTabBarInset } from '../../components/TabBar';
 import { Toast } from '../../components/Toast';
-import { CATEGORIA_LABELS, STATUS_META, formatarData, formatarProtocolo, podeEditar } from '../../domain/demanda';
+import {
+  CATEGORIA_LABELS,
+  STATUS_META,
+  STATUS_OPTIONS,
+  formatarData,
+  formatarProtocolo,
+  isGestor,
+  podeEditar,
+} from '../../domain/demanda';
 import { parseEditFeedback, parseIdParam, routes } from '../../navigation/routes';
+import { useDemandStore } from '../../stores/demandStore';
 import { colors, fonts, palette } from '../../theme';
 
 // Figma "Detalhe da Demanda" e o estado após editar ("Demanda atualizada com sucesso!").
@@ -41,6 +51,8 @@ export function DemandaDetalheScreen() {
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [toast, setToast] = useState<{ message: string; tone: 'success' | 'warning' } | null>(null);
+  const [isChangingStatus, setIsChangingStatus] = useState(false);
+  const { fetchOne, changeStatus } = useDemandStore.getState();
 
   const load = useCallback(async () => {
     if (!id) {
@@ -49,11 +61,11 @@ export function DemandaDetalheScreen() {
     }
     setError(null);
     try {
-      setDemanda(await obterDemanda(id));
+      setDemanda(await fetchOne(id));
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Não foi possível carregar a demanda.');
     }
-  }, [id]);
+  }, [id, fetchOne]);
 
   // `feedback.at` muda a cada edição salva: recarrega e mostra o resultado.
   useEffect(() => {
@@ -75,11 +87,29 @@ export function DemandaDetalheScreen() {
   async function handleRefresh() {
     setIsRefreshing(true);
     try {
-      setDemanda(await obterDemanda(id));
+      setDemanda(await fetchOne(id));
     } catch {
       // Mantém os dados já exibidos; o erro de rede não deve apagar a tela.
     } finally {
       setIsRefreshing(false);
+    }
+  }
+
+  // Gestor Público: muda o status da ocorrência (o cidadão autor é notificado pelo backend).
+  async function handleChangeStatus(status: DemandaStatus) {
+    if (!demanda || status === demanda.status || isChangingStatus) return;
+    setIsChangingStatus(true);
+    try {
+      const updated = await changeStatus(demanda.id, status);
+      setDemanda(updated);
+      setToast({ message: `Status alterado para "${STATUS_META[status].label}".`, tone: 'success' });
+    } catch (changeError) {
+      setToast({
+        message: changeError instanceof Error ? changeError.message : 'Não foi possível alterar o status.',
+        tone: 'warning',
+      });
+    } finally {
+      setIsChangingStatus(false);
     }
   }
 
@@ -161,6 +191,19 @@ export function DemandaDetalheScreen() {
             </View>
           </View>
 
+          {isGestor(user) && (
+            <View style={styles.gestorActions} testID="detalhe-gestor">
+              <SelectField
+                label={isChangingStatus ? 'Alterando status...' : 'Alterar status da demanda'}
+                placeholder="Selecione o novo status"
+                value={demanda.status}
+                options={STATUS_OPTIONS}
+                onChange={handleChangeStatus}
+                testID="detalhe-status"
+              />
+            </View>
+          )}
+
           {podeEditar(demanda, user) && (
             <Button
               label="Editar Demanda"
@@ -236,6 +279,9 @@ const styles = StyleSheet.create({
   feedback: {
     paddingHorizontal: 16,
     marginBottom: 8,
+  },
+  gestorActions: {
+    marginTop: 16,
   },
   editButton: {
     marginTop: 16,
