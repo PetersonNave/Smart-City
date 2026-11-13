@@ -67,9 +67,8 @@ O projeto está vinculado ao EAS (`extra.eas.projectId` no `app.json`) e tem doi
 | `production` | AAB / IPA para as lojas | Publicação |
 
 ```bash
-npm install -g eas-cli   # ou use npx eas-cli
-eas login
-npm run build:apk        # = eas build --platform android --profile preview
+npx eas-cli login       # só na primeira vez (não precisa instalar nada globalmente)
+npm run build:apk        # = npx eas-cli build --platform android --profile preview
 npm run build:ios        # IPA (exige conta Apple Developer)
 ```
 

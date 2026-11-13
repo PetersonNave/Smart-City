@@ -53,8 +53,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest",
-    "build:apk": "eas build --platform android --profile preview",
-    "build:ios": "eas build --platform ios --profile preview"
+    "build:apk": "npx --yes eas-cli@latest build --platform android --profile preview",
+    "build:ios": "npx --yes eas-cli@latest build --platform ios --profile preview"
   },
   "private": true,
   "jest": {
