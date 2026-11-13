@@ -15,6 +15,10 @@ export type DemandaCategoria = (typeof DEMANDA_CATEGORIAS)[number];
 export type DemandaStatus = 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'REJECTED';
 export type DemandaPrioridade = 'baixa' | 'media' | 'alta' | 'urgente';
 
+/** Regiões da cidade aceitas pelo backend (`REGIOES_VALIDAS`). */
+export const DEMANDA_REGIOES = ['CENTRO', 'NORTE', 'SUL', 'LESTE', 'OESTE'] as const;
+export type DemandaRegiao = (typeof DEMANDA_REGIOES)[number];
+
 /** Formato de resposta (`DemandaResponseSchema`): chaves em inglês, datas ISO sem fuso (UTC). */
 export type Demanda = {
   id: number;
@@ -28,6 +32,10 @@ export type Demanda = {
   updatedAt: string | null;
   /** URL absoluta da foto (`GET /api/demandas/fotos/<arquivo>`), ou null sem foto. */
   photoUrl: string | null;
+  /** Região informada no registro (opcional). */
+  region?: DemandaRegiao | null;
+  /** Quando foi concluída/recusada (base do tempo médio de atendimento). */
+  resolvedAt?: string | null;
 };
 
 export type Paginacao = {
@@ -47,6 +55,7 @@ export type ListarDemandasParams = {
   status?: DemandaStatus;
   categoria?: DemandaCategoria;
   prioridade?: DemandaPrioridade;
+  regiao?: DemandaRegiao;
 };
 
 /** Corpo de `POST /api/demandas` (`DemandaCreateSchema`): chaves em português. */
@@ -56,6 +65,7 @@ export type NovaDemandaInput = {
   categoria: DemandaCategoria;
   localizacao: string;
   prioridade: DemandaPrioridade;
+  regiao?: DemandaRegiao;
 };
 
 export async function listarDemandas(
@@ -81,7 +91,9 @@ export async function excluirDemanda(id: number): Promise<void> {
 }
 
 /** Campos editáveis pelo cidadão (`PATCH` envia só o que mudou; status é exclusivo do gestor). */
-export type EditarDemandaInput = Partial<Pick<NovaDemandaInput, 'titulo' | 'descricao' | 'categoria' | 'localizacao'>>;
+export type EditarDemandaInput = Partial<
+  Pick<NovaDemandaInput, 'titulo' | 'descricao' | 'categoria' | 'localizacao' | 'regiao'>
+>;
 
 export async function atualizarDemanda(id: number, input: EditarDemandaInput): Promise<Demanda> {
   const data = await unwrap(apiClient.patch<ApiEnvelope<{ demanda: Demanda }>>(`/api/demandas/${id}`, input));

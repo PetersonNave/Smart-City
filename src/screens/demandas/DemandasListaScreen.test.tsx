@@ -178,4 +178,29 @@ describe('DemandasListaScreen search and filters', () => {
     expect(screen.queryByText('Resultado antigo')).toBeNull();
     expect(screen.getByText('Resultado novo')).toBeTruthy();
   });
+
+  it('filters by category and region through the API', async () => {
+    (listarDemandas as jest.Mock).mockResolvedValue({ demandas: [makeDemanda({ id: 1 })], paginacao });
+    render(<DemandasListaScreen />);
+    await waitFor(() => expect(screen.getByTestId('demand-card-1')).toBeTruthy());
+
+    fireEvent.press(screen.getByTestId('demandas-categoria-trigger'));
+    fireEvent.press(screen.getByTestId('demandas-categoria-option-SANITATION'));
+    await waitFor(() =>
+      expect(listarDemandas).toHaveBeenLastCalledWith({ categoria: 'SANITATION', page: 1, per_page: 10 })
+    );
+
+    (listarDemandas as jest.Mock).mockResolvedValue({ demandas: [], paginacao: { ...paginacao, total: 0 } });
+    fireEvent.press(screen.getByTestId('demandas-regiao-trigger'));
+    fireEvent.press(screen.getByTestId('demandas-regiao-option-NORTE'));
+    await waitFor(() =>
+      expect(listarDemandas).toHaveBeenLastCalledWith({
+        categoria: 'SANITATION',
+        regiao: 'NORTE',
+        page: 1,
+        per_page: 10,
+      })
+    );
+    await waitFor(() => expect(screen.getByText(/em saneamento na região Zona Norte/)).toBeTruthy());
+  });
 });

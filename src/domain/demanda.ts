@@ -1,5 +1,5 @@
 import type { AuthUser } from '../api/auth';
-import type { Demanda, DemandaCategoria, DemandaStatus } from '../api/demandas';
+import type { Demanda, DemandaCategoria, DemandaRegiao, DemandaStatus } from '../api/demandas';
 import type { IconName } from '../components/Icon';
 import { palette } from '../theme';
 
@@ -32,6 +32,36 @@ export const STATUS_META: Record<DemandaStatus, { label: string; color: string; 
 export const STATUS_ORDEM: DemandaStatus[] = ['PENDING', 'IN_PROGRESS', 'RESOLVED', 'REJECTED'];
 
 export const STATUS_OPTIONS = STATUS_ORDEM.map((value) => ({ value, label: STATUS_META[value].label }));
+
+export const REGIAO_LABELS: Record<DemandaRegiao, string> = {
+  CENTRO: 'Centro',
+  NORTE: 'Zona Norte',
+  SUL: 'Zona Sul',
+  LESTE: 'Zona Leste',
+  OESTE: 'Zona Oeste',
+};
+
+// Derivadas dos rótulos (e não das listas da API) para seguirem a mesma ordem em toda a UI.
+export const REGIAO_OPTIONS = (Object.keys(REGIAO_LABELS) as DemandaRegiao[]).map((value) => ({
+  value,
+  label: REGIAO_LABELS[value],
+}));
+
+export const CATEGORIA_OPTIONS = (Object.keys(CATEGORIA_LABELS) as DemandaCategoria[]).map((value) => ({
+  value,
+  label: CATEGORIA_LABELS[value],
+}));
+
+/** "36.5" horas → "1 dia e 12 h"; abaixo de 1 h, em minutos. */
+export function formatarDuracaoHoras(horas: number | null | undefined): string {
+  if (horas === null || horas === undefined || Number.isNaN(horas)) return '—';
+  if (horas < 1) return `${Math.max(1, Math.round(horas * 60))} min`;
+  if (horas < 24) return `${Math.round(horas)} h`;
+  const dias = Math.floor(horas / 24);
+  const resto = Math.round(horas - dias * 24);
+  const diasTexto = dias === 1 ? '1 dia' : `${dias} dias`;
+  return resto ? `${diasTexto} e ${resto} h` : diasTexto;
+}
 
 /** Perfis de acesso devolvidos pela API (`role`). */
 export const PERFIL_LABELS: Record<string, string> = {

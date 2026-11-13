@@ -17,6 +17,7 @@
     "expo-linear-gradient": "~57.0.2",
     "expo-linking": "~57.0.11",
     "expo-location": "~57.0.20",
+    "expo-notifications": "~57.0.25",
     "expo-router": "~57.0.23",
     "expo-secure-store": "~57.0.4",
     "expo-splash-screen": "~57.0.9",
@@ -51,7 +52,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "jest"
+    "test": "jest",
+    "build:apk": "eas build --platform android --profile preview",
+    "build:ios": "eas build --platform ios --profile preview"
   },
   "private": true,
   "jest": {

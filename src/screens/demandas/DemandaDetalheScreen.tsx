@@ -16,6 +16,7 @@ import { useTabBarInset } from '../../components/TabBar';
 import { Toast } from '../../components/Toast';
 import {
   CATEGORIA_LABELS,
+  REGIAO_LABELS,
   STATUS_META,
   STATUS_OPTIONS,
   formatarData,
@@ -178,7 +179,11 @@ export function DemandaDetalheScreen() {
             <View style={styles.rows}>
               <InfoRow label="Protocolo" value={formatarProtocolo(demanda)} />
               <InfoRow label="Categoria" value={CATEGORIA_LABELS[demanda.category]} />
+              <InfoRow label="Região" value={demanda.region ? REGIAO_LABELS[demanda.region] : 'Não informada'} />
               <InfoRow label="Data de registro" value={formatarData(demanda.createdAt)} />
+              {demanda.resolvedAt ? (
+                <InfoRow label="Atendida em" value={formatarData(demanda.resolvedAt)} />
+              ) : null}
               <View style={styles.row}>
                 <Text style={styles.rowLabel}>Status atual</Text>
                 <View style={styles.statusValue}>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts, palette } from '../../theme';
 import { Icon } from '../Icon';
@@ -13,6 +13,8 @@ export type SelectFieldProps<T extends string> = {
   options: SelectOption<T>[];
   onChange: (value: T) => void;
   error?: string;
+  /** `chip`: versão compacta para barras de filtro (sem rótulo acima; o rótulo vira o título da folha). */
+  variant?: 'card' | 'chip';
   testID?: string;
 };
 
@@ -24,26 +26,31 @@ export function SelectField<T extends string>({
   options,
   onChange,
   error,
+  variant = 'card',
   testID = 'select',
 }: SelectFieldProps<T>) {
+  const isChip = variant === 'chip';
   const [isOpen, setIsOpen] = useState(false);
   const insets = useSafeAreaInsets();
   const selected = options.find((option) => option.value === value);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.label}>{label}</Text>
+    <View style={isChip ? styles.chipContainer : styles.container}>
+      {!isChip && <Text style={styles.label}>{label}</Text>}
       <Pressable
         testID={`${testID}-trigger`}
         onPress={() => setIsOpen(true)}
         accessibilityRole="button"
         accessibilityLabel={`${label}: ${selected?.label ?? placeholder}`}
-        style={[styles.field, error ? styles.fieldError : null]}
+        style={[isChip ? styles.chip : styles.field, error ? styles.fieldError : null]}
       >
-        <Text style={[styles.value, !selected && styles.placeholder]} numberOfLines={1}>
+        <Text
+          style={isChip ? styles.chipValue : [styles.value, !selected && styles.placeholder]}
+          numberOfLines={1}
+        >
           {selected?.label ?? placeholder}
         </Text>
-        <Icon name="chevronDown" size={20} color={palette.textStrong} />
+        <Icon name="chevronDown" size={isChip ? 16 : 20} color={isChip ? palette.white : palette.textStrong} />
       </Pressable>
       {error && (
         <Text testID={`${testID}-error`} style={styles.error}>
@@ -56,13 +63,13 @@ export function SelectField<T extends string>({
         <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}>
           <View style={styles.sheetHandle} />
           <Text style={styles.sheetTitle}>{label}</Text>
-          <FlatList
-            data={options}
-            keyExtractor={(option) => option.value}
-            renderItem={({ item }) => {
+          {/* Poucas opções (categorias, regiões, status): renderiza todas de uma vez. */}
+          <ScrollView>
+            {options.map((item) => {
               const isSelected = item.value === value;
               return (
                 <Pressable
+                  key={item.value}
                   testID={`${testID}-option-${item.value}`}
                   onPress={() => {
                     onChange(item.value);
@@ -76,8 +83,8 @@ export function SelectField<T extends string>({
                   {isSelected && <Icon name="check" size={20} color={colors.primary} />}
                 </Pressable>
               );
-            }}
-          />
+            })}
+          </ScrollView>
         </View>
       </Modal>
     </View>
@@ -106,6 +113,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.secondary,
     backgroundColor: palette.white,
+  },
+  chipContainer: {
+    flex: 1,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 6,
+    height: 40,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: palette.headerButton,
+  },
+  chipValue: {
+    flex: 1,
+    fontFamily: fonts.inter.semiBold,
+    fontSize: 13,
+    color: palette.white,
   },
   fieldError: {
     borderColor: palette.dangerBorder,

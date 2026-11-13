@@ -45,3 +45,18 @@ beforeEach(() => {
   const store = jest.requireActual('./src/stores/demandStore');
   store.useDemandStore.getState().reset();
 });
+
+// expo-notifications depende de módulo nativo: nos testes, um mock que não faz nada
+// (cada teste pode sobrescrever os retornos com mockResolvedValue).
+jest.mock('expo-notifications', () => ({
+  setNotificationHandler: jest.fn(),
+  setNotificationChannelAsync: jest.fn().mockResolvedValue(null),
+  getPermissionsAsync: jest.fn().mockResolvedValue({ granted: false, canAskAgain: false }),
+  requestPermissionsAsync: jest.fn().mockResolvedValue({ granted: false, canAskAgain: false }),
+  getExpoPushTokenAsync: jest.fn().mockRejectedValue(new Error('push indisponível nos testes')),
+  scheduleNotificationAsync: jest.fn().mockResolvedValue('id'),
+  addNotificationReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  useLastNotificationResponse: jest.fn(() => null),
+  DEFAULT_ACTION_IDENTIFIER: 'expo.modules.notifications.actions.DEFAULT',
+  AndroidImportance: { HIGH: 4 },
+}));

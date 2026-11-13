@@ -28,7 +28,7 @@ import { fonts, palette } from '../../theme';
 import { DemandaFormFields } from './DemandaFormFields';
 import { DEMANDA_FORM_VAZIO, editarDemandaSchema, type DemandaFormValues } from './demandaForm.schema';
 
-const TEXT_FIELDS = ['titulo', 'descricao', 'categoria', 'localizacao'] as const;
+const TEXT_FIELDS = ['titulo', 'descricao', 'categoria', 'localizacao', 'regiao'] as const;
 
 function toFormValues(demanda: Demanda): DemandaFormValues {
   return {
@@ -37,6 +37,7 @@ function toFormValues(demanda: Demanda): DemandaFormValues {
     categoria: demanda.category,
     descricao: demanda.description,
     localizacao: demanda.location,
+    regiao: demanda.region ?? '',
   };
 }
 
@@ -106,10 +107,12 @@ export function EditarDemandaScreen() {
     const changes: EditarDemandaInput = {};
     TEXT_FIELDS.forEach((field) => {
       if (dirtyFields[field]) {
-        (changes as Record<string, string>)[field] = values[field];
+        (changes as Record<string, string>)[field] = values[field] ?? '';
       }
     });
     if (changes.categoria) changes.categoria = values.categoria as DemandaCategoria;
+    // A API não aceita região vazia: "não informada" só existe antes da primeira escolha.
+    if ('regiao' in changes && !changes.regiao) delete changes.regiao;
 
     try {
       if (Object.keys(changes).length > 0) {

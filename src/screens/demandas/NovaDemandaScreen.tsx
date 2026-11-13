@@ -5,7 +5,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ApiValidationError } from '../../api/envelope';
-import { criarDemanda, enviarFotoDemanda, type Demanda, type DemandaCategoria } from '../../api/demandas';
+import {
+  criarDemanda,
+  enviarFotoDemanda,
+  type Demanda,
+  type DemandaCategoria,
+  type DemandaRegiao,
+} from '../../api/demandas';
 import { Button } from '../../components/Button';
 import { GradientBackground } from '../../components/GradientBackground';
 import { Icon } from '../../components/Icon';
@@ -19,7 +25,7 @@ import { fonts, palette } from '../../theme';
 import { DemandaFormFields } from './DemandaFormFields';
 import { DEMANDA_FORM_VAZIO, novaDemandaSchema, type DemandaFormValues } from './demandaForm.schema';
 
-const API_FIELDS = ['titulo', 'descricao', 'categoria', 'localizacao'] as const;
+const API_FIELDS = ['titulo', 'descricao', 'categoria', 'localizacao', 'regiao'] as const;
 
 const LOCATION_PLACEHOLDER: Record<AddressStatus, string> = {
   idle: 'Endereço do problema',
@@ -77,6 +83,7 @@ export function NovaDemandaScreen() {
         localizacao: values.localizacao,
         // Cidadão não escolhe prioridade no Figma; a triagem fica com o gestor.
         prioridade: 'media',
+        ...(values.regiao ? { regiao: values.regiao as DemandaRegiao } : {}),
       });
     } catch (error) {
       if (error instanceof ApiValidationError) {
@@ -151,7 +158,7 @@ export function NovaDemandaScreen() {
             style={styles.submit}
             testID="nova-submit"
           />
-          <Text style={styles.footer}>Todos os campos são obrigatórios</Text>
+          <Text style={styles.footer}>Todos os campos são obrigatórios, exceto a região</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </GradientBackground>

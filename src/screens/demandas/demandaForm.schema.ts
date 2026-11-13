@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DEMANDA_CATEGORIAS } from '../../api/demandas';
+import { DEMANDA_CATEGORIAS, DEMANDA_REGIOES } from '../../api/demandas';
 
 // Limites espelham o DemandaCreateSchema/DemandaUpdateSchema do backend, para o erro
 // aparecer antes do envio.
@@ -24,6 +24,11 @@ const camposTexto = {
     .trim()
     .min(3, 'Informe a localização do problema')
     .max(500, 'A localização deve ter no máximo 500 caracteres'),
+  // Opcional: '' = não informada (filtros e métricas do gestor usam quando presente).
+  regiao: z
+    .string()
+    .optional()
+    .refine((value) => !value || (DEMANDA_REGIOES as readonly string[]).includes(value), 'Selecione uma região'),
 };
 
 /** Nova demanda: a foto é obrigatória (Figma "Anexe ao menos uma foto"). */
@@ -46,4 +51,5 @@ export const DEMANDA_FORM_VAZIO: DemandaFormValues = {
   categoria: '',
   descricao: '',
   localizacao: '',
+  regiao: '',
 };

@@ -2,7 +2,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { type Demanda, type DemandaStatus } from '../../api/demandas';
+import {
+  type Demanda,
+  type DemandaCategoria,
+  type DemandaRegiao,
+  type DemandaStatus,
+} from '../../api/demandas';
 import { useAuth } from '../../auth/AuthContext';
 import { Button } from '../../components/Button';
 import { ConfirmModal } from '../../components/ConfirmModal';
@@ -13,9 +18,17 @@ import { Loading } from '../../components/Loading';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { SearchBar } from '../../components/SearchBar';
 import { SegmentedControl, type SegmentOption } from '../../components/SegmentedControl';
+import { SelectField, type SelectOption } from '../../components/SelectField';
 import { useTabBarInset } from '../../components/TabBar';
 import { Toast } from '../../components/Toast';
-import { STATUS_META, podeExcluir } from '../../domain/demanda';
+import {
+  CATEGORIA_LABELS,
+  CATEGORIA_OPTIONS,
+  REGIAO_LABELS,
+  REGIAO_OPTIONS,
+  STATUS_META,
+  podeExcluir,
+} from '../../domain/demanda';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { routes } from '../../navigation/routes';
 import { useDemandStore } from '../../stores/demandStore';
@@ -29,6 +42,18 @@ const STATUS_OPTIONS: SegmentOption<StatusFiltro>[] = [
     value,
     label: STATUS_META[value].label,
   })),
+];
+
+const TODAS = 'TODAS' as const;
+
+const CATEGORIA_FILTRO_OPTIONS: SelectOption<typeof TODAS | DemandaCategoria>[] = [
+  { value: TODAS, label: 'Todas as categorias' },
+  ...CATEGORIA_OPTIONS,
+];
+
+const REGIAO_FILTRO_OPTIONS: SelectOption<typeof TODAS | DemandaRegiao>[] = [
+  { value: TODAS, label: 'Todas as regiões' },
+  ...REGIAO_OPTIONS,
 ];
 
 export function DemandasListaScreen() {
@@ -61,7 +86,7 @@ export function DemandasListaScreen() {
     if ((q || undefined) !== useDemandStore.getState().filters.q) setFilters({ q: q || undefined });
   }, [q, setFilters]);
   const statusFiltro: StatusFiltro = filtros.status ?? 'TODAS';
-  const hasFilters = Boolean(filtros.q || filtros.status || filtros.categoria);
+  const hasFilters = Boolean(filtros.q || filtros.status || filtros.categoria || filtros.regiao);
 
   // Recarrega quando a aba volta ao foco (ex.: depois de registrar uma demanda) e quando os filtros mudam.
   useFocusEffect(
@@ -113,6 +138,26 @@ export function DemandasListaScreen() {
             accessibilityLabel="Filtrar por status"
             testID="demandas-status"
           />
+          <View style={styles.selectRow}>
+            <SelectField
+              variant="chip"
+              label="Filtrar por categoria"
+              placeholder="Todas as categorias"
+              value={filtros.categoria ?? TODAS}
+              options={CATEGORIA_FILTRO_OPTIONS}
+              onChange={(value) => setFilters({ categoria: value === TODAS ? undefined : value })}
+              testID="demandas-categoria"
+            />
+            <SelectField
+              variant="chip"
+              label="Filtrar por região"
+              placeholder="Todas as regiões"
+              value={filtros.regiao ?? TODAS}
+              options={REGIAO_FILTRO_OPTIONS}
+              onChange={(value) => setFilters({ regiao: value === TODAS ? undefined : value })}
+              testID="demandas-regiao"
+            />
+          </View>
         </View>
       )}
 
@@ -164,7 +209,9 @@ export function DemandasListaScreen() {
                 <Text style={styles.emptyTitle}>Nenhuma demanda encontrada</Text>
                 <Text style={styles.emptyText}>
                   {filtros.q ? `Nada corresponde a "${filtros.q}"` : 'Nenhuma demanda'}
-                  {filtros.status ? ` com status ${STATUS_META[filtros.status].label.toLowerCase()}` : ''}.
+                  {filtros.status ? ` com status ${STATUS_META[filtros.status].label.toLowerCase()}` : ''}
+                  {filtros.categoria ? ` em ${CATEGORIA_LABELS[filtros.categoria].toLowerCase()}` : ''}
+                  {filtros.regiao ? ` na região ${REGIAO_LABELS[filtros.regiao]}` : ''}.
                 </Text>
                 <Button
                   label="Limpar filtros"
@@ -229,6 +276,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 10,
     marginBottom: 8,
+  },
+  selectRow: {
+    flexDirection: 'row',
+    gap: 8,
   },
   feedback: {
     paddingHorizontal: 16,

@@ -6,6 +6,7 @@ import {
   obterDemanda,
   type Demanda,
   type DemandaCategoria,
+  type DemandaRegiao,
   type DemandaStatus,
   type ListarDemandasParams,
 } from '../api/demandas';
@@ -17,7 +18,29 @@ export type DemandaFiltros = {
   q?: string;
   status?: DemandaStatus;
   categoria?: DemandaCategoria;
+  regiao?: DemandaRegiao;
 };
+
+/**
+ * Chamado quando dados vindos da API mostram que o status de uma demanda já conhecida mudou
+ * (ex.: o gestor atualizou enquanto o cidadão acompanhava). Mudanças feitas pelo próprio
+ * usuário neste aparelho (`changeStatus`, `upsert`) não disparam.
+ */
+export type StatusChangeListener = (demanda: Demanda, statusAnterior: DemandaStatus) => void;
+
+let statusChangeListener: StatusChangeListener | null = null;
+
+export function setStatusChangeListener(listener: StatusChangeListener | null) {
+  statusChangeListener = listener;
+}
+
+function reportStatusChanges(previous: Record<number, Demanda>, incoming: Demanda[]) {
+  if (!statusChangeListener) return;
+  incoming.forEach((demanda) => {
+    const before = previous[demanda.id];
+    if (before && before.status !== demanda.status) statusChangeListener?.(demanda, before.status);
+  });
+}
 
 export type DemandListStatus = 'loading' | 'ready' | 'error';
 
@@ -43,8 +66,11 @@ type DemandStoreActions = {
   loadFirstPage: () => Promise<void>;
   retryFirstLoad: () => Promise<void>;
   loadMore: () => Promise<void>;
-  /** Busca uma demanda na API e atualiza o cache e a lista. */
-  fetchOne: (id: number) => Promise<Demanda>;
+  /**
+   * Busca uma demanda na API e atualiza o cache e a lista. `notify: false` não avisa o
+   * listener de status (ex.: a atualização veio de uma notificação push já exibida).
+   */
+  fetchOne: (id: number, options?: { notify?: boolean }) => Promise<Demanda>;
   /** Registra a versão mais recente de uma demanda (substitui na lista, se estiver nela). */
   upsert: (demanda: Demanda) => void;
   remove: (id: number) => Promise<void>;
@@ -80,6 +106,7 @@ function toApiParams(filters: DemandaFiltros): ListarDemandasParams {
   if (filters.q) params.q = filters.q;
   if (filters.status) params.status = filters.status;
   if (filters.categoria) params.categoria = filters.categoria;
+  if (filters.regiao) params.regiao = filters.regiao;
   return params;
 }
 
@@ -107,6 +134,7 @@ export const useDemandStore = create<DemandStore>()((set, get) => ({
     try {
       const result = await listarDemandas({ ...toApiParams(get().filters), page: 1, per_page: DEMANDAS_PER_PAGE });
       if (seq !== requestSeq) return;
+      reportStatusChanges(get().byId, result.demandas);
       set((state) => ({
         items: result.demandas,
         byId: indexById(state.byId, result.demandas),
@@ -142,6 +170,7 @@ export const useDemandStore = create<DemandStore>()((set, get) => ({
       const nextPage = page + 1;
       const result = await listarDemandas({ ...toApiParams(filters), page: nextPage, per_page: DEMANDAS_PER_PAGE });
       if (seq !== requestSeq) return;
+      reportStatusChanges(get().byId, result.demandas);
       set((state) => {
         const known = new Set(state.items.map((item) => item.id));
         return {
@@ -158,8 +187,9 @@ export const useDemandStore = create<DemandStore>()((set, get) => ({
     }
   },
 
-  fetchOne: async (id) => {
+  fetchOne: async (id, options) => {
     const demanda = await obterDemanda(id);
+    if (options?.notify !== false) reportStatusChanges(get().byId, [demanda]);
     get().upsert(demanda);
     return demanda;
   },

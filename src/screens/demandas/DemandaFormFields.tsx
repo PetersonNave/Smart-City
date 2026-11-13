@@ -1,10 +1,10 @@
 import { StyleSheet, View } from 'react-native';
 import { Controller, type Control, type FieldErrors } from 'react-hook-form';
-import { DEMANDA_CATEGORIAS, type DemandaCategoria } from '../../api/demandas';
+import { DEMANDA_CATEGORIAS, type DemandaCategoria, type DemandaRegiao } from '../../api/demandas';
 import { PhotoField } from '../../components/PhotoField';
 import { SelectField } from '../../components/SelectField';
 import { TextField } from '../../components/TextField';
-import { CATEGORIA_LABELS } from '../../domain/demanda';
+import { CATEGORIA_LABELS, REGIAO_OPTIONS } from '../../domain/demanda';
 import type { DemandaFormValues } from './demandaForm.schema';
 
 const CATEGORIA_OPTIONS = DEMANDA_CATEGORIAS.map((value) => ({ value, label: CATEGORIA_LABELS[value] }));
@@ -119,6 +119,22 @@ export function DemandaFormFields({
             />
             {locationHint}
           </View>
+        )}
+      />
+
+      <Controller
+        control={control}
+        name="regiao"
+        render={({ field }) => (
+          <SelectField
+            label="Região (opcional)"
+            placeholder="Selecione a região da cidade"
+            value={field.value as DemandaRegiao | ''}
+            options={REGIAO_OPTIONS}
+            onChange={field.onChange}
+            error={errors.regiao?.message}
+            testID={`${testIDPrefix}-regiao`}
+          />
         )}
       />
     </>

@@ -5,7 +5,7 @@ import {
   obterDemanda,
   type Demanda,
 } from '../api/demandas';
-import { useDemandStore } from './demandStore';
+import { setStatusChangeListener, useDemandStore } from './demandStore';
 
 jest.mock('../api/demandas');
 
@@ -99,6 +99,46 @@ describe('demandStore', () => {
     expect(useDemandStore.getState().listStatus).toBe('ready');
     expect(useDemandStore.getState().listError).toBe('Oscilou');
     expect(useDemandStore.getState().items).toHaveLength(1);
+  });
+
+  it('sends the region filter to the API', async () => {
+    (listarDemandas as jest.Mock).mockResolvedValue({ demandas: [], paginacao });
+    useDemandStore.getState().setFilters({ regiao: 'NORTE', categoria: 'SANITATION' });
+
+    await useDemandStore.getState().loadFirstPage();
+
+    expect(listarDemandas).toHaveBeenCalledWith({ regiao: 'NORTE', categoria: 'SANITATION', page: 1, per_page: 10 });
+  });
+
+  describe('status change listener', () => {
+    const listener = jest.fn();
+    beforeEach(() => setStatusChangeListener(listener));
+    afterEach(() => setStatusChangeListener(null));
+
+    it('reports a status that changed on the server since the last load', async () => {
+      (listarDemandas as jest.Mock).mockResolvedValueOnce({ demandas: [makeDemanda()], paginacao });
+      await useDemandStore.getState().loadFirstPage();
+      (listarDemandas as jest.Mock).mockResolvedValueOnce({
+        demandas: [makeDemanda({ status: 'IN_PROGRESS' })],
+        paginacao,
+      });
+
+      await useDemandStore.getState().loadFirstPage();
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith(expect.objectContaining({ id: 1, status: 'IN_PROGRESS' }), 'PENDING');
+    });
+
+    it('does not report the first load, local changes or silent refreshes', async () => {
+      (listarDemandas as jest.Mock).mockResolvedValue({ demandas: [makeDemanda()], paginacao });
+      await useDemandStore.getState().loadFirstPage();
+      (atualizarStatusDemanda as jest.Mock).mockResolvedValue(makeDemanda({ status: 'IN_PROGRESS' }));
+      await useDemandStore.getState().changeStatus(1, 'IN_PROGRESS');
+      (obterDemanda as jest.Mock).mockResolvedValue(makeDemanda({ status: 'RESOLVED' }));
+      await useDemandStore.getState().fetchOne(1, { notify: false });
+
+      expect(listener).not.toHaveBeenCalled();
+    });
   });
 
   it('reset clears everything from the previous session', async () => {

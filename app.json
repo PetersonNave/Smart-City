@@ -7,7 +7,8 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "br.com.resolveai.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -16,7 +17,8 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "br.com.resolveai.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -46,8 +48,22 @@
           "recordAudioAndroid": false
         }
       ],
+      [
+        "expo-notifications",
+        {
+          "color": "#329D9C",
+          "defaultChannel": "demandas"
+        }
+      ],
       "expo-router"
     ],
-    "scheme": "resolveai"
+    "scheme": "resolveai",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "fa4473b4-f537-4fd9-8368-c33582947e19"
+      }
+    },
+    "owner": "peterson_meloo"
   }
 }

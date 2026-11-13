@@ -12,6 +12,9 @@ Este repositório contém apenas o front-end mobile. Ele consome a **mesma API**
 * **Gerenciamento de Estado global:** Context API (`src/auth/AuthContext.tsx`, o *auth store*: sessão, usuário e perfil) e Zustand (`src/stores/demandStore.ts`: lista de demandas, filtros, paginação e cache por id, compartilhados entre lista, detalhe, edição e criação)
 * **Perfis:** Cidadão (registra e acompanha as próprias demandas) e Gestor Público (vê todas, altera o status). O perfil vem da API (`role`) e é exibido na Home e na aba Perfil
 * **Formulários:** react-hook-form + zod
+* **Notificações:** `expo-notifications` — o cidadão é avisado quando o gestor muda o status de uma demanda sua (push remoto via backend; notificação local como alternativa no Expo Go)
+* **Painel do gestor:** indicadores operacionais (total, status, categoria, região, tempo médio de atendimento) em `GET /api/demandas/metricas`
+* **Build:** EAS Build (`eas.json`), APK para Android pelo perfil `preview`
 * **Recursos do aparelho:** `expo-camera` (câmera do app para fotografar a demanda), `expo-image-picker` (foto da galeria) e `expo-location` (endereço via GPS)
 * **Dados:** Integração com o back-end Flask (mesma API consumida pela aplicação web)
 
@@ -54,6 +57,32 @@ Siga os passos abaixo para configurar o ambiente de desenvolvimento na sua máqu
    npx tsc --noEmit
    ```
 
+### 2.3 Build empacotado (EAS)
+
+O projeto está vinculado ao EAS (`extra.eas.projectId` no `app.json`) e tem dois perfis em `eas.json`:
+
+| Perfil | Saída | Uso |
+| :--- | :--- | :--- |
+| `preview` | APK (Android) / build interno (iOS) | Instalar direto no celular para testes e apresentação |
+| `production` | AAB / IPA para as lojas | Publicação |
+
+```bash
+npm install -g eas-cli   # ou use npx eas-cli
+eas login
+npm run build:apk        # = eas build --platform android --profile preview
+npm run build:ios        # IPA (exige conta Apple Developer)
+```
+
+Ao terminar, o EAS mostra o link/QR code para baixar o APK. A URL da API embutida nos perfis `preview`/`production` é a do back-end publicado (`EXPO_PUBLIC_API_URL` em `eas.json`); altere-a lá se o servidor mudar.
+
+### 2.4 Notificações (registrar → acompanhar → notificar)
+
+1. Ao entrar no app, o usuário autoriza as notificações e o app envia o Expo push token para `PUT /auth/push-token`.
+2. Quando um **gestor** muda o status de uma demanda, o back-end envia a notificação ao autor ("Sua demanda foi atualizada").
+3. Tocar na notificação abre o detalhe da demanda; com o app aberto, a demanda é atualizada na hora.
+
+> O push remoto não funciona no **Expo Go para Android** (limitação do SDK 53+). Nesse caso o app usa notificações **locais**: ao recarregar a lista ou o detalhe e perceber que o status mudou, ele avisa o cidadão. Para testar o push remoto, use o APK do perfil `preview`.
+
 ## 3 Variáveis de Ambiente
 
 O Expo expõe ao código do app apenas variáveis com o prefixo `EXPO_PUBLIC_`. As seguintes variáveis devem ser configuradas no arquivo `.env` na raiz do projeto:
@@ -68,7 +97,8 @@ O Expo expõe ao código do app apenas variáveis com o prefixo `EXPO_PUBLIC_`. 
 
 Organização de pastas:
 
-* `/src/api`: Cliente HTTP (Axios com refresh de token), envelope de resposta e chamadas de autenticação e demandas
+* `/src/api`: Cliente HTTP (Axios com refresh de token), envelope de resposta e chamadas de autenticação, demandas, métricas e push token
+* `/src/notifications`: Permissão, registro do push token, notificação local e navegação ao tocar
 * `/src/auth`: Estado global de sessão (Context) e armazenamento seguro de tokens (SecureStore)
 * `/src/stores`: Estado global das demandas (Zustand)
 * `/src/components`: Componentes reutilizáveis de UI (Button, TextField, SelectField, PhotoField, DemandCard, StatusBadge, TabBar, ConfirmModal, Toast...)
@@ -98,7 +128,8 @@ A documentação completa da API (compartilhada com a aplicação web) pode ser 
 | `POST` | `/auth/register` | Cria uma nova conta de usuário |
 | `POST` | `/auth/login` | Autentica e retorna `access_token` + `refresh_token` |
 | `GET` | `/auth/me` | Retorna os dados do usuário logado |
-| `PATCH` | `/auth/update` | Atualiza perfil ou promove cargo (Admin/Gestor) |
+| `PATCH` | `/auth/update` | Atualiza nome e/ou senha (o perfil de acesso não muda por aqui) |
+| `PUT` / `DELETE` | `/auth/push-token` | Ativa/desativa as notificações push no aparelho |
 | `POST` | `/auth/refresh` | Renova o `access_token` usando o `refresh_token` |
 | `GET` | `/auth/logout` | Invalida o token e encerra a sessão |
 
@@ -106,10 +137,11 @@ A documentação completa da API (compartilhada com a aplicação web) pode ser 
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| `GET` | `/api/demandas` | Lista as demandas com paginação, busca (`q`) e filtros (`status`, `categoria`, `prioridade`) |
+| `GET` | `/api/demandas` | Lista as demandas com paginação, busca (`q`) e filtros (`status`, `categoria`, `regiao`, `prioridade`) |
+| `GET` | `/api/demandas/metricas` | Indicadores do painel do gestor (somente gestor) |
 | `POST` | `/api/demandas` | Cidadão cria uma nova solicitação urbana |
 | `GET` | `/api/demandas/{id}` | Retorna os detalhes de uma demanda específica |
-| `PATCH` | `/api/demandas/{id}` | Atualiza status ou prioridade da demanda |
+| `PATCH` | `/api/demandas/{id}` | Atualiza a demanda; o gestor muda o status (o autor é notificado) |
 | `DELETE` | `/api/demandas/{id}` | Remove uma demanda (respeitando regras de role) |
 | `PUT` | `/api/demandas/{id}/foto` | Envia/substitui a foto da demanda (`multipart/form-data`, campo `foto`) |
 | `GET` | `/api/demandas/fotos/{arquivo}` | Imagem da demanda (use o `photoUrl` retornado) |
@@ -135,6 +167,7 @@ O comportamento do app deve respeitar as mesmas regras aplicadas pela API:
 
 - **CITIZEN (Cidadão):** cria demandas, edita e exclui apenas as próprias (enquanto pendentes), visualiza o próprio histórico.
 - **MANAGER (Gestor):** atualiza status e prioridade de qualquer demanda, não pode excluir demandas já concluídas.
-- **ADMIN:** pode promover usuários para Gestor via `PATCH /auth/update`.
+- **Contas de gestor** são criadas/promovidas no servidor (`flask ... create-gestor`, ver README do back-end); o cadastro do app sempre cria cidadãos.
+- No app, o **Início** mostra o *Painel do Gestor* para gestores e a Home para cidadãos; a alteração de status aparece só para gestores no detalhe da demanda.
 
 ---
