@@ -30,15 +30,15 @@ const metricas: MetricasPainel = {
 };
 
 describe('PainelGestorScreen', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     (useAuth as jest.Mock).mockReturnValue({ user: { id: 9, role: 'gestor', name: 'Gestora' } });
   });
-  afterEach(() => jest.clearAllMocks());
+  afterEach(async () => jest.clearAllMocks());
 
   it('shows the operational indicators from the API', async () => {
     (obterMetricas as jest.Mock).mockResolvedValue(metricas);
 
-    render(<PainelGestorScreen />);
+    await render(<PainelGestorScreen />);
 
     await waitFor(() => expect(screen.getByTestId('painel-total')).toBeTruthy());
     expect(within(screen.getByTestId('painel-total')).getByText('12')).toBeTruthy();
@@ -55,19 +55,19 @@ describe('PainelGestorScreen', () => {
       .mockRejectedValueOnce(new Error('Acesso restrito a gestores públicos.'))
       .mockResolvedValueOnce(metricas);
 
-    render(<PainelGestorScreen />);
+    await render(<PainelGestorScreen />);
 
     await waitFor(() => expect(screen.getByText('Acesso restrito a gestores públicos.')).toBeTruthy());
-    fireEvent.press(screen.getByTestId('painel-retry'));
+    await fireEvent.press(screen.getByTestId('painel-retry'));
     await waitFor(() => expect(screen.getByTestId('painel-total')).toBeTruthy());
   });
 
   it('goes to the demand list to analyse', async () => {
     (obterMetricas as jest.Mock).mockResolvedValue(metricas);
-    render(<PainelGestorScreen />);
+    await render(<PainelGestorScreen />);
     await waitFor(() => expect(screen.getByTestId('painel-analisar')).toBeTruthy());
 
-    fireEvent.press(screen.getByTestId('painel-analisar'));
+    await fireEvent.press(screen.getByTestId('painel-analisar'));
 
     expect(mockRouter.push).toHaveBeenCalledWith('/demandas');
   });

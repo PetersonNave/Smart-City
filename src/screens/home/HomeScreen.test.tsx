@@ -12,12 +12,12 @@ jest.mock('expo-router', () => ({ useRouter: () => mockRouter }));
 const user = { id: 1, name: 'testuser', email: 'test@example.com', role: 'cidadao', createdAt: '2026-01-01' };
 
 describe('HomeScreen', () => {
-  afterEach(() => jest.clearAllMocks());
+  afterEach(async () => jest.clearAllMocks());
 
-  it('greets the logged-in user by name', () => {
+  it('greets the logged-in user by name', async () => {
     (useAuth as jest.Mock).mockReturnValue({ user, logout: jest.fn() });
 
-    render(<HomeScreen />);
+    await render(<HomeScreen />);
     expect(screen.getByText(/testuser/)).toBeTruthy();
   });
 
@@ -25,17 +25,17 @@ describe('HomeScreen', () => {
     const logout = jest.fn().mockResolvedValue(undefined);
     (useAuth as jest.Mock).mockReturnValue({ user, logout });
 
-    render(<HomeScreen />);
-    fireEvent.press(screen.getByTestId('home-logout'));
+    await render(<HomeScreen />);
+    await fireEvent.press(screen.getByTestId('home-logout'));
 
     await waitFor(() => expect(logout).toHaveBeenCalledTimes(1));
   });
 
-  it('opens the new-demand flow from the shortcut button', () => {
+  it('opens the new-demand flow from the shortcut button', async () => {
     (useAuth as jest.Mock).mockReturnValue({ user, logout: jest.fn() });
 
-    render(<HomeScreen />);
-    fireEvent.press(screen.getByTestId('home-nova-demanda'));
+    await render(<HomeScreen />);
+    await fireEvent.press(screen.getByTestId('home-nova-demanda'));
 
     expect(mockRouter.push).toHaveBeenCalledWith('/nova-demanda');
   });

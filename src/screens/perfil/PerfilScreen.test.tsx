@@ -5,31 +5,31 @@ import { PerfilScreen } from './PerfilScreen';
 jest.mock('../../auth/AuthContext');
 
 describe('PerfilScreen', () => {
-  afterEach(() => jest.clearAllMocks());
+  afterEach(async () => jest.clearAllMocks());
 
-  it('shows the citizen profile and logs out', () => {
+  it('shows the citizen profile and logs out', async () => {
     const logout = jest.fn();
     (useAuth as jest.Mock).mockReturnValue({
       user: { id: 1, name: 'Ana', email: 'ana@example.com', role: 'cidadao', createdAt: '2026-10-01T10:00:00' },
       logout,
     });
 
-    render(<PerfilScreen />);
+    await render(<PerfilScreen />);
 
     expect(screen.getByText('Ana')).toBeTruthy();
     expect(screen.getByText('ana@example.com')).toBeTruthy();
     expect(screen.getByText('Cidadão')).toBeTruthy();
-    fireEvent.press(screen.getByTestId('perfil-logout'));
+    await fireEvent.press(screen.getByTestId('perfil-logout'));
     expect(logout).toHaveBeenCalled();
   });
 
-  it('identifies the public manager profile', () => {
+  it('identifies the public manager profile', async () => {
     (useAuth as jest.Mock).mockReturnValue({
       user: { id: 2, name: 'Gestora', email: 'g@prefeitura.gov.br', role: 'gestor', createdAt: '2026-10-01T10:00:00' },
       logout: jest.fn(),
     });
 
-    render(<PerfilScreen />);
+    await render(<PerfilScreen />);
 
     expect(screen.getByText('Gestor Público')).toBeTruthy();
   });

@@ -12,19 +12,29 @@ const mockConstants: { expoConfig: { extra: Record<string, unknown> }; easConfig
   expoConfig: { extra: {} },
   easConfig: undefined,
 };
-jest.mock('expo-constants', () => ({
-  __esModule: true,
-  get default() {
-    return mockConstants;
-  },
-}));
+// Herda o módulo real (outros pacotes, como expo-asset, leem campos dele) e troca só a config.
+jest.mock('expo-constants', () => {
+  const actual = jest.requireActual('expo-constants');
+  const real = actual.default ?? actual;
+  return {
+    ...actual,
+    __esModule: true,
+    default: new Proxy(real, {
+      // `mockConstants` ainda não existe enquanto os imports são carregados (jest.mock é içado).
+      get: (target, prop) =>
+        typeof mockConstants !== 'undefined' && prop in mockConstants
+          ? mockConstants[prop as keyof typeof mockConstants]
+          : target[prop],
+    }),
+  };
+});
 
 function setProjectId(projectId: string | undefined) {
   mockConstants.expoConfig.extra = projectId ? { eas: { projectId } } : {};
 }
 
 describe('notifications', () => {
-  afterEach(() => jest.clearAllMocks());
+  afterEach(async () => jest.clearAllMocks());
 
   it('returns null when the user denies the permission', async () => {
     (Notifications.getPermissionsAsync as jest.Mock).mockResolvedValueOnce({ granted: false, canAskAgain: true });
@@ -73,7 +83,7 @@ describe('notifications', () => {
     expect(request.content.data).toEqual({ tipo: 'status_demanda', demandaId: 42, status: 'RESOLVED' });
   });
 
-  it('reads the demand id only from status notifications', () => {
+  it('reads the demand id only from status notifications', async () => {
     const build = (data: unknown) => ({ request: { content: { data } } }) as unknown as Notifications.Notification;
     expect(demandaIdFromNotification(build({ tipo: 'status_demanda', demandaId: 7, status: 'IN_PROGRESS' }))).toBe(7);
     expect(demandaIdFromNotification(build({ tipo: 'outro', demandaId: 7 }))).toBeNull();

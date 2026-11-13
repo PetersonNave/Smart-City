@@ -24,12 +24,12 @@ function Probe() {
 }
 
 describe('AuthContext', () => {
-  afterEach(() => jest.clearAllMocks());
+  afterEach(async () => jest.clearAllMocks());
 
   it('starts as guest when there are no stored tokens', async () => {
     (getStoredTokens as jest.Mock).mockResolvedValue(null);
 
-    render(<AuthProvider><Probe /></AuthProvider>);
+    await render(<AuthProvider><Probe /></AuthProvider>);
 
     await waitFor(() => expect(screen.getByTestId('status').props.children).toBe('guest'));
   });
@@ -38,7 +38,7 @@ describe('AuthContext', () => {
     (getStoredTokens as jest.Mock).mockResolvedValue({ accessToken: 'a', refreshToken: 'b' });
     (getMe as jest.Mock).mockResolvedValue({ id: 1, name: 'testuser', email: 'test@example.com', role: 'cidadao', createdAt: '2026-01-01' });
 
-    render(<AuthProvider><Probe /></AuthProvider>);
+    await render(<AuthProvider><Probe /></AuthProvider>);
 
     await waitFor(() => expect(screen.getByTestId('status').props.children).toBe('authenticated'));
     expect(screen.getByTestId('user-name').props.children).toBe('testuser');
@@ -48,7 +48,7 @@ describe('AuthContext', () => {
     (getStoredTokens as jest.Mock).mockResolvedValue({ accessToken: 'a', refreshToken: 'b' });
     (getMe as jest.Mock).mockRejectedValue(new Error('unauthorized'));
 
-    render(<AuthProvider><Probe /></AuthProvider>);
+    await render(<AuthProvider><Probe /></AuthProvider>);
 
     await waitFor(() => expect(screen.getByTestId('status').props.children).toBe('guest'));
     expect(clearStoredTokens).toHaveBeenCalled();
@@ -62,7 +62,7 @@ describe('AuthContext', () => {
       user: { id: 1, name: 'testuser', email: 'test@example.com', role: 'cidadao', createdAt: '2026-01-01' },
     });
 
-    render(<AuthProvider><Probe /></AuthProvider>);
+    await render(<AuthProvider><Probe /></AuthProvider>);
     await waitFor(() => expect(screen.getByTestId('status').props.children).toBe('guest'));
 
     await act(async () => {
@@ -78,7 +78,7 @@ describe('AuthContext', () => {
     (getMe as jest.Mock).mockResolvedValue({ id: 1, name: 'testuser', email: 'test@example.com', role: 'cidadao', createdAt: '2026-01-01' });
     (apiLogout as jest.Mock).mockResolvedValue(null);
 
-    render(<AuthProvider><Probe /></AuthProvider>);
+    await render(<AuthProvider><Probe /></AuthProvider>);
     await waitFor(() => expect(screen.getByTestId('status').props.children).toBe('authenticated'));
 
     await act(async () => {

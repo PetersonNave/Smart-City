@@ -52,17 +52,17 @@ function renderApp(status: AuthStatus, initialUrl = '/') {
 }
 
 describe('app routes (Expo Router)', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     (listarDemandas as jest.Mock).mockResolvedValue({
       demandas: [demanda],
       paginacao: { total: 1, paginas: 1, pagina_atual: 1, por_pagina: 10, tem_proxima: false, tem_anterior: false },
     });
     (obterDemanda as jest.Mock).mockResolvedValue(demanda);
   });
-  afterEach(() => jest.clearAllMocks());
+  afterEach(async () => jest.clearAllMocks());
 
-  it('shows the Figma loading screen while the session is being restored', () => {
-    renderApp('bootstrapping');
+  it('shows the Figma loading screen while the session is being restored', async () => {
+    await renderApp('bootstrapping');
 
     expect(screen.getByTestId('loading-logo')).toBeTruthy();
   });
@@ -70,7 +70,7 @@ describe('app routes (Expo Router)', () => {
   it.each(['/', '/demandas', '/demandas/7', '/nova-demanda'])(
     'shows the login (auth group) to guests who open %s',
     async (url) => {
-      const app = renderApp('guest', url);
+      const app = await renderApp('guest', url);
 
       await waitFor(() => expect(screen.getByText('Login')).toBeTruthy());
       expect(app.getSegments()[0]).toBe('(auth)');
@@ -80,16 +80,16 @@ describe('app routes (Expo Router)', () => {
   );
 
   it('lets guests go from login to /cadastro', async () => {
-    const app = renderApp('guest', '/login');
+    const app = await renderApp('guest', '/login');
 
-    fireEvent.press(await screen.findByTestId('go-to-cadastro'));
+    await fireEvent.press(await screen.findByTestId('go-to-cadastro'));
 
     await waitFor(() => expect(app.getPathname()).toBe('/cadastro'));
     expect(screen.getByText('Cadastro')).toBeTruthy();
   });
 
   it('opens the Início tab for logged-in users, with the Figma tab bar', async () => {
-    const app = renderApp('authenticated', '/');
+    const app = await renderApp('authenticated', '/');
 
     await waitFor(() => expect(screen.getByText('Olá, Ana!')).toBeTruthy());
     expect(app.getPathname()).toBe('/');
@@ -97,16 +97,16 @@ describe('app routes (Expo Router)', () => {
   });
 
   it('keeps logged-in users out of /login', async () => {
-    const app = renderApp('authenticated', '/login');
+    const app = await renderApp('authenticated', '/login');
 
     await waitFor(() => expect(app.getPathname()).toBe('/'));
   });
 
   it('switches tabs through the custom tab bar', async () => {
-    const app = renderApp('authenticated', '/');
+    const app = await renderApp('authenticated', '/');
     await waitFor(() => expect(screen.getByTestId('tab-demandas')).toBeTruthy());
 
-    fireEvent.press(screen.getByTestId('tab-demandas'));
+    await fireEvent.press(screen.getByTestId('tab-demandas'));
 
     await waitFor(() => expect(app.getPathname()).toBe('/demandas'));
     await waitFor(() => expect(screen.getByTestId('demand-card-7')).toBeTruthy());
@@ -114,29 +114,29 @@ describe('app routes (Expo Router)', () => {
   });
 
   it('opens /demandas/7 directly with the list underneath, so "back" goes to the list', async () => {
-    const app = renderApp('authenticated', '/demandas/7');
+    const app = await renderApp('authenticated', '/demandas/7');
 
     await waitFor(() => expect(screen.getByTestId('detalhe-card')).toBeTruthy());
     expect(obterDemanda).toHaveBeenCalledWith(7);
 
-    fireEvent.press(screen.getByTestId('detalhe-header-back'));
+    await fireEvent.press(screen.getByTestId('detalhe-header-back'));
 
     await waitFor(() => expect(app.getPathname()).toBe('/demandas'));
   });
 
   it('opens the new-demand flow outside the tabs (no tab bar, as in Figma)', async () => {
-    const app = renderApp('authenticated', '/');
-    fireEvent.press(await screen.findByTestId('home-nova-demanda'));
+    const app = await renderApp('authenticated', '/');
+    await fireEvent.press(await screen.findByTestId('home-nova-demanda'));
 
     await waitFor(() => expect(app.getPathname()).toBe('/nova-demanda'));
     expect(screen.queryByTestId('tab-bar')).toBeNull();
   });
 
   it('shows the login when the session ends while using the app (logout / refresh failure)', async () => {
-    const app = renderApp('authenticated', '/demandas');
+    const app = await renderApp('authenticated', '/demandas');
     await waitFor(() => expect(app.getPathname()).toBe('/demandas'));
 
-    act(() => mockSetStatus('guest'));
+    await act(() => mockSetStatus('guest'));
 
     await waitFor(() => expect(screen.getByText('Login')).toBeTruthy());
     expect(app.getSegments()[0]).toBe('(auth)');

@@ -8,13 +8,13 @@ describe('apiClient', () => {
   let mock: MockAdapter;
   let refreshMock: MockAdapter;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     mock = new MockAdapter(apiClient);
     refreshMock = new MockAdapter(refreshClient);
     jest.clearAllMocks();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     mock.restore();
     refreshMock.restore();
   });
@@ -127,7 +127,7 @@ describe('apiClient', () => {
     setOnRefreshFailure(null);
   });
 
-  it('gives up on requests that hang (timeout configured)', () => {
+  it('gives up on requests that hang (timeout configured)', async () => {
     expect(apiClient.defaults.timeout).toBeGreaterThan(0);
   });
 });

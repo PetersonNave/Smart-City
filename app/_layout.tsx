@@ -50,10 +50,11 @@ function RootNavigator() {
   // sozinho para o grupo liberado (inclusive quando o refresh do token falha no meio do uso).
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={status === 'authenticated'}>
+      {/* SDK 58: o destino do redirecionamento é explícito (redirectTo). */}
+      <Stack.Protected guard={status === 'authenticated'} redirectTo="/login">
         <Stack.Screen name="(app)" />
       </Stack.Protected>
-      <Stack.Protected guard={status === 'guest'}>
+      <Stack.Protected guard={status === 'guest'} redirectTo="/">
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
     </Stack>

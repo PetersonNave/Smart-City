@@ -67,7 +67,7 @@ function DetalheStub() {
 // Expo Router real (em memória): /demandas/7 → /demandas/7/editar, para o dismissTo e o
 // bloqueio de saída funcionarem como no app.
 async function renderScreen() {
-  const result = renderRouter(
+  const result = await renderRouter(
     {
       _layout: () => <Stack screenOptions={{ headerShown: false }} />,
       'demandas/[id]/index': DetalheStub,
@@ -88,7 +88,7 @@ async function waitForForm() {
 describe('EditarDemandaScreen', () => {
   const retryGps = jest.fn();
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     (useAuth as jest.Mock).mockReturnValue({ user: { id: 1, role: 'cidadao', name: 'Ana' } });
     (useCurrentAddress as jest.Mock).mockReturnValue({ status: 'idle', address: null, retry: retryGps });
@@ -96,7 +96,7 @@ describe('EditarDemandaScreen', () => {
     (atualizarDemanda as jest.Mock).mockResolvedValue(demanda);
     (enviarFotoDemanda as jest.Mock).mockResolvedValue(demanda);
   });
-  afterEach(() => {
+  afterEach(async () => {
     jest.restoreAllMocks();
     jest.clearAllMocks();
   });
@@ -115,8 +115,8 @@ describe('EditarDemandaScreen', () => {
     await renderScreen();
     await waitForForm();
 
-    fireEvent.changeText(screen.getByTestId('editar-localizacao-input'), 'Av. Brasil, 1200');
-    fireEvent.press(screen.getByTestId('editar-atualizar'));
+    await fireEvent.changeText(screen.getByTestId('editar-localizacao-input'), 'Av. Brasil, 1200');
+    await fireEvent.press(screen.getByTestId('editar-atualizar'));
 
     await waitFor(() => expect(screen.getByText('Detalhe 7 loc:true fotoFalhou:false')).toBeTruthy());
     expect(atualizarDemanda).toHaveBeenCalledWith(7, { localizacao: 'Av. Brasil, 1200' });
@@ -128,8 +128,8 @@ describe('EditarDemandaScreen', () => {
     await renderScreen();
     await waitForForm();
 
-    fireEvent.press(screen.getByTestId('editar-foto'));
-    fireEvent.press(screen.getByTestId('editar-atualizar'));
+    await fireEvent.press(screen.getByTestId('editar-foto'));
+    await fireEvent.press(screen.getByTestId('editar-atualizar'));
 
     await waitFor(() => expect(screen.getByText('Detalhe 7 loc:false fotoFalhou:false')).toBeTruthy());
     expect(enviarFotoDemanda).toHaveBeenCalledWith(7, { uri: 'file:///nova.jpg', mimeType: 'image/jpeg' });
@@ -143,8 +143,8 @@ describe('EditarDemandaScreen', () => {
     await renderScreen();
     await waitForForm();
 
-    fireEvent.press(screen.getByTestId('editar-foto'));
-    fireEvent.press(screen.getByTestId('editar-atualizar'));
+    await fireEvent.press(screen.getByTestId('editar-foto'));
+    await fireEvent.press(screen.getByTestId('editar-atualizar'));
 
     await waitFor(() => expect(screen.getByText('A foto deve ter no máximo 8 MB.')).toBeTruthy());
     expect(screen.queryByText(/Detalhe 7/)).toBeNull();
@@ -155,9 +155,9 @@ describe('EditarDemandaScreen', () => {
     await renderScreen();
     await waitForForm();
 
-    fireEvent.changeText(screen.getByTestId('editar-titulo-input'), 'Semáforo quebrado');
-    fireEvent.press(screen.getByTestId('editar-foto'));
-    fireEvent.press(screen.getByTestId('editar-atualizar'));
+    await fireEvent.changeText(screen.getByTestId('editar-titulo-input'), 'Semáforo quebrado');
+    await fireEvent.press(screen.getByTestId('editar-foto'));
+    await fireEvent.press(screen.getByTestId('editar-atualizar'));
 
     await waitFor(() => expect(screen.getByText('Detalhe 7 loc:false fotoFalhou:true')).toBeTruthy());
     expect(atualizarDemanda).toHaveBeenCalledWith(7, { titulo: 'Semáforo quebrado' });
@@ -170,8 +170,8 @@ describe('EditarDemandaScreen', () => {
     await renderScreen();
     await waitForForm();
 
-    fireEvent.changeText(screen.getByTestId('editar-titulo-input'), 'Título repetido');
-    fireEvent.press(screen.getByTestId('editar-atualizar'));
+    await fireEvent.changeText(screen.getByTestId('editar-titulo-input'), 'Título repetido');
+    await fireEvent.press(screen.getByTestId('editar-atualizar'));
 
     await waitFor(() => expect(screen.getByText('Já existe uma demanda com este título.')).toBeTruthy());
   });
@@ -193,7 +193,7 @@ describe('EditarDemandaScreen', () => {
     await waitForForm();
     expect(screen.getByTestId('editar-localizacao-input').props.value).toBe('Rua XV de Novembro, 450');
 
-    fireEvent.press(screen.getByTestId('editar-usar-gps'));
+    await fireEvent.press(screen.getByTestId('editar-usar-gps'));
 
     expect(retryGps).toHaveBeenCalled();
     await waitFor(() =>
@@ -205,8 +205,8 @@ describe('EditarDemandaScreen', () => {
     await renderScreen();
     await waitForForm();
 
-    fireEvent.changeText(screen.getByTestId('editar-descricao-input'), 'Descrição alterada pelo cidadão.');
-    fireEvent.press(screen.getByTestId('editar-cancelar'));
+    await fireEvent.changeText(screen.getByTestId('editar-descricao-input'), 'Descrição alterada pelo cidadão.');
+    await fireEvent.press(screen.getByTestId('editar-cancelar'));
 
     await waitFor(() =>
       expect(Alert.alert).toHaveBeenCalledWith('Descartar alterações?', expect.any(String), expect.any(Array))

@@ -33,15 +33,15 @@ function renderScreen(params: Record<string, string> = { id: '187' }) {
 }
 
 describe('DemandaDetalheScreen', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     (useAuth as jest.Mock).mockReturnValue({ user: { id: 1, role: 'cidadao', name: 'Ana' } });
   });
-  afterEach(() => jest.clearAllMocks());
+  afterEach(async () => jest.clearAllMocks());
 
   it('loads the demand by id and shows every detail row', async () => {
     (obterDemanda as jest.Mock).mockResolvedValue(demanda);
 
-    renderScreen();
+    await renderScreen();
 
     await waitFor(() => expect(screen.getByText('Semáforo danificado')).toBeTruthy());
     expect(obterDemanda).toHaveBeenCalledWith(187);
@@ -54,18 +54,18 @@ describe('DemandaDetalheScreen', () => {
   it('shows the API error and retries', async () => {
     (obterDemanda as jest.Mock).mockRejectedValueOnce(new Error('Demanda não encontrada.')).mockResolvedValueOnce(demanda);
 
-    renderScreen();
+    await renderScreen();
 
     await waitFor(() => expect(screen.getByText('Demanda não encontrada.')).toBeTruthy());
-    fireEvent.press(screen.getByTestId('detalhe-retry'));
+    await fireEvent.press(screen.getByTestId('detalhe-retry'));
     await waitFor(() => expect(screen.getByTestId('detalhe-card')).toBeTruthy());
   });
 
   it('goes back from the header', async () => {
     (obterDemanda as jest.Mock).mockResolvedValue(demanda);
-    renderScreen();
+    await renderScreen();
 
-    fireEvent.press(screen.getByTestId('detalhe-header-back'));
+    await fireEvent.press(screen.getByTestId('detalhe-header-back'));
     expect(mockRouter.back).toHaveBeenCalled();
     await waitFor(() => expect(screen.getByTestId('detalhe-card')).toBeTruthy());
   });
@@ -75,7 +75,7 @@ describe('DemandaDetalheScreen', () => {
       .mockResolvedValueOnce(demanda)
       .mockResolvedValueOnce({ ...demanda, status: 'IN_PROGRESS' });
 
-    renderScreen();
+    await renderScreen();
     await waitFor(() => expect(screen.getAllByText('PENDENTE').length).toBeGreaterThan(0));
 
     const { refreshControl } = screen.getByTestId('detalhe-scroll').props;
@@ -90,7 +90,7 @@ describe('DemandaDetalheScreen', () => {
   it('shows the saved photo', async () => {
     (obterDemanda as jest.Mock).mockResolvedValue({ ...demanda, photoUrl: 'http://api/fotos/a.jpg' });
 
-    renderScreen();
+    await renderScreen();
 
     await waitFor(() =>
       expect(screen.getByTestId('detalhe-foto-photo').props.source).toEqual({ uri: 'http://api/fotos/a.jpg' })
@@ -99,10 +99,10 @@ describe('DemandaDetalheScreen', () => {
 
   it('offers "Editar Demanda" on a pending demand and opens the edit screen', async () => {
     (obterDemanda as jest.Mock).mockResolvedValue(demanda);
-    renderScreen();
+    await renderScreen();
 
     await waitFor(() => expect(screen.getByTestId('detalhe-editar')).toBeTruthy());
-    fireEvent.press(screen.getByTestId('detalhe-editar'));
+    await fireEvent.press(screen.getByTestId('detalhe-editar'));
 
     expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/demandas/[id]/editar', params: { id: '187' } });
   });
@@ -110,7 +110,7 @@ describe('DemandaDetalheScreen', () => {
   it('hides "Editar Demanda" once the demand left pending (citizen)', async () => {
     (obterDemanda as jest.Mock).mockResolvedValue({ ...demanda, status: 'RESOLVED' });
 
-    renderScreen();
+    await renderScreen();
 
     await waitFor(() => expect(screen.getByTestId('detalhe-card')).toBeTruthy());
     expect(screen.queryByTestId('detalhe-editar')).toBeNull();
@@ -119,7 +119,7 @@ describe('DemandaDetalheScreen', () => {
   it('shows the Figma success toast and "(atualizada)" label after an edit', async () => {
     (obterDemanda as jest.Mock).mockResolvedValue({ ...demanda, location: 'Av. Brasil, 1200' });
 
-    renderScreen({ id: '187', atualizada: '1', localizacaoAtualizada: '1', fotoFalhou: '0' });
+    await renderScreen({ id: '187', atualizada: '1', localizacaoAtualizada: '1', fotoFalhou: '0' });
 
     await waitFor(() => expect(screen.getByText('Demanda atualizada com sucesso!')).toBeTruthy());
     await waitFor(() => expect(screen.getByText('Av. Brasil, 1200')).toBeTruthy());
@@ -129,7 +129,7 @@ describe('DemandaDetalheScreen', () => {
   it('warns when the edit was saved but the photo upload failed', async () => {
     (obterDemanda as jest.Mock).mockResolvedValue(demanda);
 
-    renderScreen({ id: '187', atualizada: '2', localizacaoAtualizada: '0', fotoFalhou: '1' });
+    await renderScreen({ id: '187', atualizada: '2', localizacaoAtualizada: '0', fotoFalhou: '1' });
 
     await waitFor(() =>
       expect(screen.getByText('Demanda atualizada, mas a foto não pôde ser enviada.')).toBeTruthy()
@@ -139,16 +139,16 @@ describe('DemandaDetalheScreen', () => {
   it('goes to the list when opened directly without history (deep link)', async () => {
     (obterDemanda as jest.Mock).mockResolvedValue(demanda);
     mockRouter.canGoBack.mockReturnValueOnce(false);
-    renderScreen();
+    await renderScreen();
 
-    fireEvent.press(screen.getByTestId('detalhe-header-back'));
+    await fireEvent.press(screen.getByTestId('detalhe-header-back'));
 
     expect(mockRouter.replace).toHaveBeenCalledWith('/demandas');
     await waitFor(() => expect(screen.getByTestId('detalhe-card')).toBeTruthy());
   });
 
   it('shows an error for an invalid id in the URL without calling the API', async () => {
-    renderScreen({ id: 'abc' });
+    await renderScreen({ id: 'abc' });
 
     await waitFor(() => expect(screen.getByTestId('detalhe-error')).toBeTruthy());
     expect(obterDemanda).not.toHaveBeenCalled();
@@ -157,7 +157,7 @@ describe('DemandaDetalheScreen', () => {
   it('does not offer the status change to citizens', async () => {
     (obterDemanda as jest.Mock).mockResolvedValue(demanda);
 
-    renderScreen();
+    await renderScreen();
 
     await waitFor(() => expect(screen.getByText('Semáforo danificado')).toBeTruthy());
     expect(screen.queryByTestId('detalhe-gestor')).toBeNull();
@@ -168,11 +168,11 @@ describe('DemandaDetalheScreen', () => {
     (obterDemanda as jest.Mock).mockResolvedValue(demanda);
     (atualizarStatusDemanda as jest.Mock).mockResolvedValue({ ...demanda, status: 'IN_PROGRESS' });
 
-    renderScreen();
+    await renderScreen();
 
     await waitFor(() => expect(screen.getByTestId('detalhe-gestor')).toBeTruthy());
-    fireEvent.press(screen.getByTestId('detalhe-status-trigger'));
-    fireEvent.press(screen.getByTestId('detalhe-status-option-IN_PROGRESS'));
+    await fireEvent.press(screen.getByTestId('detalhe-status-trigger'));
+    await fireEvent.press(screen.getByTestId('detalhe-status-option-IN_PROGRESS'));
 
     await waitFor(() => expect(atualizarStatusDemanda).toHaveBeenCalledWith(187, 'IN_PROGRESS'));
     await waitFor(() => expect(screen.getByText('Status alterado para "Em análise".')).toBeTruthy());

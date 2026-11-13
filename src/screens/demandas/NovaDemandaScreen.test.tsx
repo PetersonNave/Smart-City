@@ -42,7 +42,7 @@ function EnviadaStub() {
 // Expo Router real (em memória): Início → Nova demanda, para o voltar e o bloqueio de saída
 // funcionarem como no app.
 async function renderScreen() {
-  const result = renderRouter(
+  const result = await renderRouter(
     {
       _layout: () => <Stack screenOptions={{ headerShown: false }} />,
       index: StartScreen,
@@ -57,16 +57,16 @@ async function renderScreen() {
   return result;
 }
 
-function fillForm() {
-  fireEvent.press(screen.getByTestId('nova-foto'));
-  fireEvent.changeText(screen.getByTestId('nova-titulo-input'), 'Semáforo danificado');
-  fireEvent.press(screen.getByTestId('nova-categoria-trigger'));
-  fireEvent.press(screen.getByTestId('nova-categoria-option-PUBLIC_LIGHTING'));
-  fireEvent.changeText(screen.getByTestId('nova-descricao-input'), 'Semáforo apagado há três dias.');
+async function fillForm() {
+  await fireEvent.press(screen.getByTestId('nova-foto'));
+  await fireEvent.changeText(screen.getByTestId('nova-titulo-input'), 'Semáforo danificado');
+  await fireEvent.press(screen.getByTestId('nova-categoria-trigger'));
+  await fireEvent.press(screen.getByTestId('nova-categoria-option-PUBLIC_LIGHTING'));
+  await fireEvent.changeText(screen.getByTestId('nova-descricao-input'), 'Semáforo apagado há três dias.');
 }
 
 describe('NovaDemandaScreen', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     (useCurrentAddress as jest.Mock).mockReturnValue({
       status: 'ready',
@@ -74,7 +74,7 @@ describe('NovaDemandaScreen', () => {
       retry: jest.fn(),
     });
   });
-  afterEach(() => {
+  afterEach(async () => {
     jest.restoreAllMocks();
     jest.clearAllMocks();
   });
@@ -92,7 +92,7 @@ describe('NovaDemandaScreen', () => {
     (useCurrentAddress as jest.Mock).mockReturnValue({ status: 'denied', address: null, retry: jest.fn() });
     await renderScreen();
 
-    fireEvent.press(screen.getByTestId('nova-submit'));
+    await fireEvent.press(screen.getByTestId('nova-submit'));
 
     await waitFor(() => expect(screen.getByText('Anexe ao menos uma foto')).toBeTruthy());
     expect(screen.getByText('Selecione uma categoria')).toBeTruthy();
@@ -107,8 +107,8 @@ describe('NovaDemandaScreen', () => {
     await renderScreen();
     await waitFor(() => expect(screen.getByTestId('nova-localizacao-input').props.value).not.toBe(''));
 
-    fillForm();
-    fireEvent.press(screen.getByTestId('nova-submit'));
+    await fillForm();
+    await fireEvent.press(screen.getByTestId('nova-submit'));
 
     await waitFor(() =>
       expect(criarDemanda).toHaveBeenCalledWith({
@@ -132,8 +132,8 @@ describe('NovaDemandaScreen', () => {
     await renderScreen();
     await waitFor(() => expect(screen.getByTestId('nova-localizacao-input').props.value).not.toBe(''));
 
-    fillForm();
-    fireEvent.press(screen.getByTestId('nova-submit'));
+    await fillForm();
+    await fireEvent.press(screen.getByTestId('nova-submit'));
 
     await waitFor(() => expect(screen.getByText('Já existe uma demanda com este título.')).toBeTruthy());
     expect(screen.queryByText(/Enviada/)).toBeNull();
@@ -146,8 +146,8 @@ describe('NovaDemandaScreen', () => {
     await renderScreen();
     await waitFor(() => expect(screen.getByTestId('nova-localizacao-input').props.value).not.toBe(''));
 
-    fillForm();
-    fireEvent.press(screen.getByTestId('nova-submit'));
+    await fillForm();
+    await fireEvent.press(screen.getByTestId('nova-submit'));
 
     await waitFor(() => expect(screen.getByText('Enviada #188 sem foto')).toBeTruthy());
   });
@@ -155,7 +155,7 @@ describe('NovaDemandaScreen', () => {
   it('leaves without asking when nothing was filled in', async () => {
     await renderScreen();
 
-    fireEvent.press(screen.getByTestId('nova-header-back'));
+    await fireEvent.press(screen.getByTestId('nova-header-back'));
 
     await waitFor(() => expect(screen.getByText('Tela anterior')).toBeTruthy());
     expect(Alert.alert).not.toHaveBeenCalled();
@@ -163,14 +163,17 @@ describe('NovaDemandaScreen', () => {
 
   it('asks before discarding a filled-in form and only leaves on Descartar', async () => {
     await renderScreen();
-    fireEvent.changeText(screen.getByTestId('nova-titulo-input'), 'Semáforo danificado');
+    await fireEvent.changeText(screen.getByTestId('nova-titulo-input'), 'Semáforo danificado');
 
-    fireEvent.press(screen.getByTestId('nova-header-back'));
+    await fireEvent.press(screen.getByTestId('nova-header-back'));
     await waitFor(() => expect(Alert.alert).toHaveBeenCalledWith('Descartar demanda?', expect.any(String), expect.any(Array)));
     expect(screen.queryByText('Tela anterior')).toBeNull();
 
     const buttons = (Alert.alert as jest.Mock).mock.calls[0][2] as { text: string; onPress?: () => void }[];
-    buttons.find((button) => button.text === 'Descartar')?.onPress?.();
+    // O toque no botão do Alert dispara a navegação: precisa rodar dentro de act no RNTL 14.
+    await act(async () => {
+      buttons.find((button) => button.text === 'Descartar')?.onPress?.();
+    });
 
     await waitFor(() => expect(screen.getByText('Tela anterior')).toBeTruthy());
   });

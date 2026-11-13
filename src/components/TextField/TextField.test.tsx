@@ -3,19 +3,19 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { TextField } from './index';
 
 describe('TextField', () => {
-  it('calls onChangeText as the user types', () => {
+  it('calls onChangeText as the user types', async () => {
     const onChangeText = jest.fn();
-    const { getByTestId } = render(
+    const { getByTestId } = await render(
       <TextField label="Email" value="" onChangeText={onChangeText} testID="field-email" />,
     );
 
-    fireEvent.changeText(getByTestId('field-email-input'), 'a@b.com');
+    await fireEvent.changeText(getByTestId('field-email-input'), 'a@b.com');
 
     expect(onChangeText).toHaveBeenCalledWith('a@b.com');
   });
 
-  it('shows the error message when error is set', () => {
-    const { getByText } = render(
+  it('shows the error message when error is set', async () => {
+    const { getByText } = await render(
       <TextField
         label="Email"
         value=""
@@ -28,16 +28,16 @@ describe('TextField', () => {
     expect(getByText('E-mail inválido')).toBeTruthy();
   });
 
-  it('does not render an error message when there is no error', () => {
-    const { queryByTestId } = render(
+  it('does not render an error message when there is no error', async () => {
+    const { queryByTestId } = await render(
       <TextField label="Email" value="" onChangeText={jest.fn()} testID="field-email" />,
     );
 
     expect(queryByTestId('field-email-error')).toBeNull();
   });
 
-  it('keeps the error border when an invalid field is focused', () => {
-    const { getByTestId } = render(
+  it('keeps the error border when an invalid field is focused', async () => {
+    const { getByTestId } = await render(
       <TextField
         label="Email"
         value=""
@@ -47,13 +47,13 @@ describe('TextField', () => {
       />,
     );
 
-    fireEvent(getByTestId('field-email-input'), 'focus');
+    await fireEvent(getByTestId('field-email-input'), 'focus');
 
     expect(StyleSheet.flatten(getByTestId('field-email-field').props.style).borderColor).toBe('#FF383C');
   });
 
-  it('renders the placeholder inside the input and no label when label is omitted (Figma login)', () => {
-    const { getByTestId, queryByText } = render(
+  it('renders the placeholder inside the input and no label when label is omitted (Figma login)', async () => {
+    const { getByTestId, queryByText } = await render(
       <TextField placeholder="Email" value="" onChangeText={jest.fn()} testID="field-email" />,
     );
 
@@ -61,8 +61,8 @@ describe('TextField', () => {
     expect(queryByText('Email')).toBeNull();
   });
 
-  it('renders the label above a card field and supports multiline', () => {
-    const { getByText, getByTestId } = render(
+  it('renders the label above a card field and supports multiline', async () => {
+    const { getByText, getByTestId } = await render(
       <TextField
         variant="card"
         label="Descrição"
@@ -78,8 +78,8 @@ describe('TextField', () => {
     expect(getByTestId('field-descricao-input').props.multiline).toBe(true);
   });
 
-  it('toggles password visibility for secureTextEntry fields', () => {
-    const { getByTestId } = render(
+  it('toggles password visibility for secureTextEntry fields', async () => {
+    const { getByTestId } = await render(
       <TextField
         label="Senha"
         value="segredo"
@@ -92,7 +92,7 @@ describe('TextField', () => {
 
     expect(input.props.secureTextEntry).toBe(true);
 
-    fireEvent.press(getByTestId('field-senha-toggle'));
+    await fireEvent.press(getByTestId('field-senha-toggle'));
 
     expect(input.props.secureTextEntry).toBe(false);
   });

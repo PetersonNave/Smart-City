@@ -1,20 +1,20 @@
 import { formatarData, formatarProtocolo, podeEditar, podeExcluir } from './demanda';
 
 describe('demanda helpers', () => {
-  it('formats the API date (UTC without offset) as dd/mm/yyyy', () => {
+  it('formats the API date (UTC without offset) as dd/mm/yyyy', async () => {
     // Meio-dia UTC cai no mesmo dia em qualquer fuso do Brasil.
     expect(formatarData('2026-10-15T12:00:00')).toBe('15/10/2026');
   });
 
-  it('returns an empty string for an unparseable date', () => {
+  it('returns an empty string for an unparseable date', async () => {
     expect(formatarData('not-a-date')).toBe('');
   });
 
-  it('builds the protocol from the creation year and a zero-padded id', () => {
+  it('builds the protocol from the creation year and a zero-padded id', async () => {
     expect(formatarProtocolo({ id: 187, createdAt: '2026-10-15T12:00:00' })).toBe('#2026-00187');
   });
 
-  it('lets citizens delete only pending demands, and managers delete any', () => {
+  it('lets citizens delete only pending demands, and managers delete any', async () => {
     const cidadao = { role: 'cidadao' };
     const gestor = { role: 'gestor' };
 
@@ -23,7 +23,7 @@ describe('demanda helpers', () => {
     expect(podeExcluir({ status: 'RESOLVED' }, gestor)).toBe(true);
   });
 
-  it('lets citizens edit only pending demands, and managers edit any', () => {
+  it('lets citizens edit only pending demands, and managers edit any', async () => {
     expect(podeEditar({ status: 'PENDING' }, { role: 'cidadao' })).toBe(true);
     expect(podeEditar({ status: 'RESOLVED' }, { role: 'cidadao' })).toBe(false);
     expect(podeEditar({ status: 'IN_PROGRESS' }, { role: 'gestor' })).toBe(true);

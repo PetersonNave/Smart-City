@@ -6,7 +6,7 @@ jest.mock('./client', () => ({
 }));
 
 describe('auth api', () => {
-  afterEach(() => jest.clearAllMocks());
+  afterEach(async () => jest.clearAllMocks());
 
   it('register() posts to /auth/register and unwraps the user', async () => {
     (apiClient.post as jest.Mock).mockResolvedValue({

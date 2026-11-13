@@ -23,7 +23,7 @@ describe('formatAddress', () => {
     ).toBe('Rua XV de Novembro, 450 - Centro');
   });
 
-  it('falls back to the formatted address when there is no street', () => {
+  it('falls back to the formatted address when there is no street', async () => {
     expect(
       formatAddress({
         street: null,
@@ -38,7 +38,7 @@ describe('formatAddress', () => {
 });
 
 describe('useCurrentAddress', () => {
-  afterEach(() => jest.clearAllMocks());
+  afterEach(async () => jest.clearAllMocks());
 
   it('resolves the reverse-geocoded address when permission is granted', async () => {
     (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({ granted: true });
@@ -49,7 +49,7 @@ describe('useCurrentAddress', () => {
       { street: 'Rua XV de Novembro', streetNumber: '450', district: null },
     ]);
 
-    const { result } = renderHook(() => useCurrentAddress());
+    const { result } = await renderHook(() => useCurrentAddress());
 
     await waitFor(() => expect(result.current.status).toBe('ready'));
     expect(result.current.address).toBe('Rua XV de Novembro, 450');
@@ -58,7 +58,7 @@ describe('useCurrentAddress', () => {
   it('reports "denied" and never asks the GPS when permission is refused', async () => {
     (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({ granted: false });
 
-    const { result } = renderHook(() => useCurrentAddress());
+    const { result } = await renderHook(() => useCurrentAddress());
 
     await waitFor(() => expect(result.current.status).toBe('denied'));
     expect(Location.getCurrentPositionAsync).not.toHaveBeenCalled();
@@ -69,7 +69,7 @@ describe('useCurrentAddress', () => {
     (Location.getCurrentPositionAsync as jest.Mock).mockResolvedValue({ coords: { latitude: 1, longitude: 2 } });
     (Location.reverseGeocodeAsync as jest.Mock).mockResolvedValue([{ street: 'Av. Brasil', streetNumber: '1200' }]);
 
-    const { result } = renderHook(() => useCurrentAddress({ auto: false }));
+    const { result } = await renderHook(() => useCurrentAddress({ auto: false }));
     expect(result.current.status).toBe('idle');
     expect(Location.requestForegroundPermissionsAsync).not.toHaveBeenCalled();
 

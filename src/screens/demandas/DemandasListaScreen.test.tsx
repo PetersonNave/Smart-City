@@ -35,10 +35,10 @@ function renderScreen() {
 }
 
 describe('DemandasListaScreen', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     (useAuth as jest.Mock).mockReturnValue({ user: { id: 1, role: 'cidadao', name: 'Ana' } });
   });
-  afterEach(() => jest.clearAllMocks());
+  afterEach(async () => jest.clearAllMocks());
 
   it('lists the citizen demands with the delete button only on pending ones', async () => {
     (listarDemandas as jest.Mock).mockResolvedValue({
@@ -46,7 +46,7 @@ describe('DemandasListaScreen', () => {
       paginacao,
     });
 
-    renderScreen();
+    await renderScreen();
 
     await waitFor(() => expect(screen.getByText('Poste piscando')).toBeTruthy());
     expect(screen.getByText('Minhas Demandas')).toBeTruthy();
@@ -57,7 +57,7 @@ describe('DemandasListaScreen', () => {
   it('shows the empty state when there are no demands', async () => {
     (listarDemandas as jest.Mock).mockResolvedValue({ demandas: [], paginacao: { ...paginacao, total: 0 } });
 
-    renderScreen();
+    await renderScreen();
 
     await waitFor(() => expect(screen.getByTestId('demandas-empty')).toBeTruthy());
   });
@@ -67,10 +67,10 @@ describe('DemandasListaScreen', () => {
       .mockRejectedValueOnce(new Error('Sem conexão'))
       .mockResolvedValueOnce({ demandas: [makeDemanda({})], paginacao });
 
-    renderScreen();
+    await renderScreen();
 
     await waitFor(() => expect(screen.getByText('Sem conexão')).toBeTruthy());
-    fireEvent.press(screen.getByTestId('demandas-retry'));
+    await fireEvent.press(screen.getByTestId('demandas-retry'));
     await waitFor(() => expect(screen.getByText('Semáforo danificado')).toBeTruthy());
   });
 
@@ -78,12 +78,12 @@ describe('DemandasListaScreen', () => {
     (listarDemandas as jest.Mock).mockResolvedValue({ demandas: [makeDemanda({ id: 1 })], paginacao });
     (excluirDemanda as jest.Mock).mockResolvedValue(undefined);
 
-    renderScreen();
+    await renderScreen();
     await waitFor(() => expect(screen.getByTestId('demand-card-1-delete')).toBeTruthy());
 
-    fireEvent.press(screen.getByTestId('demand-card-1-delete'));
+    await fireEvent.press(screen.getByTestId('demand-card-1-delete'));
     expect(screen.getByText('Excluir Demanda?')).toBeTruthy();
-    fireEvent.press(screen.getByTestId('delete-modal-confirm'));
+    await fireEvent.press(screen.getByTestId('delete-modal-confirm'));
 
     await waitFor(() => expect(screen.getByText('Demanda excluída com sucesso!')).toBeTruthy());
     expect(excluirDemanda).toHaveBeenCalledWith(1);
@@ -93,12 +93,12 @@ describe('DemandasListaScreen', () => {
   it('opens the detail from an expanded card and the new-demand flow from the FAB', async () => {
     (listarDemandas as jest.Mock).mockResolvedValue({ demandas: [makeDemanda({ id: 5 })], paginacao });
 
-    renderScreen();
+    await renderScreen();
     await waitFor(() => expect(screen.getByTestId('demand-card-5')).toBeTruthy());
 
-    fireEvent.press(screen.getByTestId('demand-card-5'));
-    fireEvent.press(screen.getByTestId('demand-card-5-open'));
-    fireEvent.press(screen.getByTestId('demandas-fab'));
+    await fireEvent.press(screen.getByTestId('demand-card-5'));
+    await fireEvent.press(screen.getByTestId('demand-card-5-open'));
+    await fireEvent.press(screen.getByTestId('demandas-fab'));
 
     expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/demandas/[id]', params: { id: '5' } });
     expect(mockRouter.push).toHaveBeenCalledWith('/nova-demanda');
@@ -106,17 +106,17 @@ describe('DemandasListaScreen', () => {
 });
 
 describe('DemandasListaScreen search and filters', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     (useAuth as jest.Mock).mockReturnValue({ user: { id: 1, role: 'cidadao', name: 'Ana' } });
   });
-  afterEach(() => jest.clearAllMocks());
+  afterEach(async () => jest.clearAllMocks());
 
   it('searches on the server after the user stops typing', async () => {
     (listarDemandas as jest.Mock).mockResolvedValue({ demandas: [makeDemanda({ id: 1 })], paginacao });
-    renderScreen();
+    await renderScreen();
     await waitFor(() => expect(screen.getByTestId('demand-card-1')).toBeTruthy());
 
-    fireEvent.changeText(screen.getByTestId('demandas-busca-input'), '  semaforo ');
+    await fireEvent.changeText(screen.getByTestId('demandas-busca-input'), '  semaforo ');
 
     await waitFor(() =>
       expect(listarDemandas).toHaveBeenLastCalledWith({ q: 'semaforo', status: undefined, page: 1, per_page: 10 })
@@ -127,10 +127,10 @@ describe('DemandasListaScreen search and filters', () => {
 
   it('filters by status through the segmented control', async () => {
     (listarDemandas as jest.Mock).mockResolvedValue({ demandas: [makeDemanda({ id: 1 })], paginacao });
-    renderScreen();
+    await renderScreen();
     await waitFor(() => expect(screen.getByTestId('demand-card-1')).toBeTruthy());
 
-    fireEvent.press(screen.getByTestId('demandas-status-RESOLVED'));
+    await fireEvent.press(screen.getByTestId('demandas-status-RESOLVED'));
 
     await waitFor(() =>
       expect(listarDemandas).toHaveBeenLastCalledWith({ q: undefined, status: 'RESOLVED', page: 1, per_page: 10 })
@@ -142,16 +142,16 @@ describe('DemandasListaScreen search and filters', () => {
     (listarDemandas as jest.Mock)
       .mockResolvedValueOnce({ demandas: [makeDemanda({ id: 1 })], paginacao })
       .mockResolvedValue({ demandas: [], paginacao: { ...paginacao, total: 0 } });
-    renderScreen();
+    await renderScreen();
     await waitFor(() => expect(screen.getByTestId('demand-card-1')).toBeTruthy());
 
-    fireEvent.press(screen.getByTestId('demandas-status-REJECTED'));
+    await fireEvent.press(screen.getByTestId('demandas-status-REJECTED'));
 
     await waitFor(() => expect(screen.getByTestId('demandas-sem-resultado')).toBeTruthy());
     expect(screen.getByText(/com status recusada/)).toBeTruthy();
 
     (listarDemandas as jest.Mock).mockResolvedValue({ demandas: [makeDemanda({ id: 1 })], paginacao });
-    fireEvent.press(screen.getByTestId('demandas-limpar-filtros'));
+    await fireEvent.press(screen.getByTestId('demandas-limpar-filtros'));
 
     await waitFor(() => expect(screen.getByTestId('demand-card-1')).toBeTruthy());
     expect(listarDemandas).toHaveBeenLastCalledWith({ q: undefined, status: undefined, page: 1, per_page: 10 });
@@ -163,12 +163,12 @@ describe('DemandasListaScreen search and filters', () => {
       .mockResolvedValueOnce({ demandas: [makeDemanda({ id: 1 })], paginacao })
       .mockImplementationOnce(() => new Promise((resolve) => (resolveOld = resolve)))
       .mockResolvedValueOnce({ demandas: [makeDemanda({ id: 3, title: 'Resultado novo' })], paginacao });
-    renderScreen();
+    await renderScreen();
     await waitFor(() => expect(screen.getByTestId('demand-card-1')).toBeTruthy());
 
-    fireEvent.press(screen.getByTestId('demandas-status-PENDING'));
+    await fireEvent.press(screen.getByTestId('demandas-status-PENDING'));
     await waitFor(() => expect(listarDemandas).toHaveBeenCalledTimes(2));
-    fireEvent.press(screen.getByTestId('demandas-status-RESOLVED'));
+    await fireEvent.press(screen.getByTestId('demandas-status-RESOLVED'));
     await waitFor(() => expect(screen.getByText('Resultado novo')).toBeTruthy());
 
     await act(async () => {
@@ -181,18 +181,18 @@ describe('DemandasListaScreen search and filters', () => {
 
   it('filters by category and region through the API', async () => {
     (listarDemandas as jest.Mock).mockResolvedValue({ demandas: [makeDemanda({ id: 1 })], paginacao });
-    render(<DemandasListaScreen />);
+    await render(<DemandasListaScreen />);
     await waitFor(() => expect(screen.getByTestId('demand-card-1')).toBeTruthy());
 
-    fireEvent.press(screen.getByTestId('demandas-categoria-trigger'));
-    fireEvent.press(screen.getByTestId('demandas-categoria-option-SANITATION'));
+    await fireEvent.press(screen.getByTestId('demandas-categoria-trigger'));
+    await fireEvent.press(screen.getByTestId('demandas-categoria-option-SANITATION'));
     await waitFor(() =>
       expect(listarDemandas).toHaveBeenLastCalledWith({ categoria: 'SANITATION', page: 1, per_page: 10 })
     );
 
     (listarDemandas as jest.Mock).mockResolvedValue({ demandas: [], paginacao: { ...paginacao, total: 0 } });
-    fireEvent.press(screen.getByTestId('demandas-regiao-trigger'));
-    fireEvent.press(screen.getByTestId('demandas-regiao-option-NORTE'));
+    await fireEvent.press(screen.getByTestId('demandas-regiao-trigger'));
+    await fireEvent.press(screen.getByTestId('demandas-regiao-option-NORTE'));
     await waitFor(() =>
       expect(listarDemandas).toHaveBeenLastCalledWith({
         categoria: 'SANITATION',

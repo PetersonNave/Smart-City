@@ -14,33 +14,33 @@ describe('novaDemandaSchema', () => {
     return result.success ? null : result.error.issues[0].message;
   }
 
-  it('accepts a complete demand', () => {
+  it('accepts a complete demand', async () => {
     expect(novaDemandaSchema.safeParse(valid).success).toBe(true);
   });
 
-  it('requires a photo (Figma error state)', () => {
+  it('requires a photo (Figma error state)', async () => {
     expect(firstMessage({ ...valid, foto: null })).toBe('Anexe ao menos uma foto');
   });
 
-  it('requires a category from the backend list', () => {
+  it('requires a category from the backend list', async () => {
     expect(firstMessage({ ...valid, categoria: '' })).toBe('Selecione uma categoria');
     expect(firstMessage({ ...valid, categoria: 'infraestrutura' })).toBe('Selecione uma categoria');
   });
 
-  it('mirrors the backend length limits for title and description', () => {
+  it('mirrors the backend length limits for title and description', async () => {
     expect(firstMessage({ ...valid, titulo: 'abc' })).toBe('O título deve ter no mínimo 5 caracteres');
     expect(firstMessage({ ...valid, descricao: 'curta' })).toBe(
       'Descreva o problema com pelo menos 10 caracteres'
     );
   });
 
-  it('requires a location', () => {
+  it('requires a location', async () => {
     expect(firstMessage({ ...valid, localizacao: '  ' })).toBe('Informe a localização do problema');
   });
 });
 
 describe('editarDemandaSchema', () => {
-  it('keeps the current photo when no new one is chosen', () => {
+  it('keeps the current photo when no new one is chosen', async () => {
     const result = editarDemandaSchema.safeParse({
       foto: null,
       titulo: 'Semáforo danificado',

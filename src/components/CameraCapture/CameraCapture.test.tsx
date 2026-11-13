@@ -29,24 +29,24 @@ function grant(granted: boolean, canAskAgain = true) {
 }
 
 describe('CameraCapture', () => {
-  afterEach(() => jest.clearAllMocks());
+  afterEach(async () => jest.clearAllMocks());
 
-  it('asks for the camera permission when it was not granted yet', () => {
+  it('asks for the camera permission when it was not granted yet', async () => {
     grant(false);
-    render(<CameraCapture visible onCapture={jest.fn()} onClose={jest.fn()} />);
+    await render(<CameraCapture visible onCapture={jest.fn()} onClose={jest.fn()} />);
 
-    fireEvent.press(screen.getByTestId('camera-permitir'));
+    await fireEvent.press(screen.getByTestId('camera-permitir'));
 
     expect(requestPermission).toHaveBeenCalled();
     expect(screen.queryByTestId('camera-view')).toBeNull();
   });
 
-  it('sends the user to the settings when the permission was permanently denied', () => {
+  it('sends the user to the settings when the permission was permanently denied', async () => {
     grant(false, false);
     const openSettings = jest.spyOn(Linking, 'openSettings').mockResolvedValue(undefined);
-    render(<CameraCapture visible onCapture={jest.fn()} onClose={jest.fn()} />);
+    await render(<CameraCapture visible onCapture={jest.fn()} onClose={jest.fn()} />);
 
-    fireEvent.press(screen.getByTestId('camera-configuracoes'));
+    await fireEvent.press(screen.getByTestId('camera-configuracoes'));
 
     expect(openSettings).toHaveBeenCalled();
     openSettings.mockRestore();
@@ -56,35 +56,35 @@ describe('CameraCapture', () => {
     grant(true);
     mockTakePicture.mockResolvedValue({ uri: 'file:///cache/Camera/foto.jpg', width: 10, height: 10, format: 'jpg' });
     const onCapture = jest.fn();
-    render(<CameraCapture visible onCapture={onCapture} onClose={jest.fn()} />);
+    await render(<CameraCapture visible onCapture={onCapture} onClose={jest.fn()} />);
 
-    fireEvent.press(screen.getByTestId('camera-disparar'));
+    await fireEvent.press(screen.getByTestId('camera-disparar'));
 
     await waitFor(() => expect(screen.getByTestId('camera-preview')).toBeTruthy());
     expect(mockTakePicture).toHaveBeenCalledWith({ quality: 0.7 });
 
-    fireEvent.press(screen.getByTestId('camera-usar'));
+    await fireEvent.press(screen.getByTestId('camera-usar'));
     expect(onCapture).toHaveBeenCalledWith({ uri: 'file:///cache/Camera/foto.jpg', mimeType: 'image/jpeg' });
   });
 
   it('goes back to the live camera on "Tirar outra"', async () => {
     grant(true);
     mockTakePicture.mockResolvedValue({ uri: 'file:///a.jpg', width: 1, height: 1, format: 'jpg' });
-    render(<CameraCapture visible onCapture={jest.fn()} onClose={jest.fn()} />);
+    await render(<CameraCapture visible onCapture={jest.fn()} onClose={jest.fn()} />);
 
-    fireEvent.press(screen.getByTestId('camera-disparar'));
+    await fireEvent.press(screen.getByTestId('camera-disparar'));
     await waitFor(() => expect(screen.getByTestId('camera-refazer')).toBeTruthy());
-    fireEvent.press(screen.getByTestId('camera-refazer'));
+    await fireEvent.press(screen.getByTestId('camera-refazer'));
 
     expect(screen.getByTestId('camera-view')).toBeTruthy();
   });
 
-  it('switches between the back and front cameras', () => {
+  it('switches between the back and front cameras', async () => {
     grant(true);
-    render(<CameraCapture visible onCapture={jest.fn()} onClose={jest.fn()} />);
+    await render(<CameraCapture visible onCapture={jest.fn()} onClose={jest.fn()} />);
     expect(screen.getByTestId('camera-view').props.facing).toBe('back');
 
-    fireEvent.press(screen.getByTestId('camera-alternar'));
+    await fireEvent.press(screen.getByTestId('camera-alternar'));
 
     expect(screen.getByTestId('camera-view').props.facing).toBe('front');
   });
@@ -93,12 +93,12 @@ describe('CameraCapture', () => {
     grant(true);
     mockTakePicture.mockRejectedValue(new Error('hardware'));
     const onClose = jest.fn();
-    render(<CameraCapture visible onCapture={jest.fn()} onClose={onClose} />);
+    await render(<CameraCapture visible onCapture={jest.fn()} onClose={onClose} />);
 
-    fireEvent.press(screen.getByTestId('camera-disparar'));
+    await fireEvent.press(screen.getByTestId('camera-disparar'));
     await waitFor(() => expect(screen.getByTestId('camera-erro')).toBeTruthy());
 
-    fireEvent.press(screen.getByTestId('camera-fechar'));
+    await fireEvent.press(screen.getByTestId('camera-fechar'));
     expect(onClose).toHaveBeenCalled();
   });
 });

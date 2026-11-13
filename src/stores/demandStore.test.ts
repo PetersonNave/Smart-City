@@ -28,7 +28,7 @@ function makeDemanda(overrides: Partial<Demanda> = {}): Demanda {
 const paginacao = { total: 1, paginas: 1, pagina_atual: 1, por_pagina: 10, tem_proxima: false, tem_anterior: false };
 
 describe('demandStore', () => {
-  afterEach(() => jest.clearAllMocks());
+  afterEach(async () => jest.clearAllMocks());
 
   it('loads the first page with the current filters sent to the API', async () => {
     (listarDemandas as jest.Mock).mockResolvedValue({ demandas: [makeDemanda()], paginacao });
@@ -112,8 +112,8 @@ describe('demandStore', () => {
 
   describe('status change listener', () => {
     const listener = jest.fn();
-    beforeEach(() => setStatusChangeListener(listener));
-    afterEach(() => setStatusChangeListener(null));
+    beforeEach(async () => setStatusChangeListener(listener));
+    afterEach(async () => setStatusChangeListener(null));
 
     it('reports a status that changed on the server since the last load', async () => {
       (listarDemandas as jest.Mock).mockResolvedValueOnce({ demandas: [makeDemanda()], paginacao });

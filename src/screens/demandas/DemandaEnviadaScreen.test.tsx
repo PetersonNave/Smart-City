@@ -31,11 +31,11 @@ function renderScreen(params: Record<string, string> = { id: '187' }) {
 }
 
 describe('DemandaEnviadaScreen', () => {
-  beforeEach(() => (obterDemanda as jest.Mock).mockResolvedValue(demanda));
-  afterEach(() => jest.clearAllMocks());
+  beforeEach(async () => (obterDemanda as jest.Mock).mockResolvedValue(demanda));
+  afterEach(async () => jest.clearAllMocks());
 
   it('loads the demand from the id in the URL and shows the protocol and initial status', async () => {
-    renderScreen();
+    await renderScreen();
 
     expect(screen.getByText('Demanda registrada com sucesso!')).toBeTruthy();
     await waitFor(() => expect(screen.getByTestId('enviada-protocolo').props.children).toBe('#2026-00187'));
@@ -44,31 +44,31 @@ describe('DemandaEnviadaScreen', () => {
   });
 
   it('"Acompanhar demanda" dismisses this screen and opens the demand detail', async () => {
-    renderScreen();
+    await renderScreen();
     await waitFor(() => expect(screen.getByTestId('enviada-protocolo')).toBeTruthy());
 
-    fireEvent.press(screen.getByTestId('enviada-acompanhar'));
+    await fireEvent.press(screen.getByTestId('enviada-acompanhar'));
 
     expect(mockRouter.dismissTo).toHaveBeenCalledWith({ pathname: '/demandas/[id]', params: { id: '187' } });
   });
 
   it('"Voltar ao início" dismisses to the home tab', async () => {
-    renderScreen();
+    await renderScreen();
     await waitFor(() => expect(screen.getByTestId('enviada-protocolo')).toBeTruthy());
 
-    fireEvent.press(screen.getByTestId('enviada-inicio'));
+    await fireEvent.press(screen.getByTestId('enviada-inicio'));
 
     expect(mockRouter.dismissTo).toHaveBeenCalledWith('/');
   });
 
   it('does not show the photo warning when the photo was uploaded', async () => {
-    renderScreen();
+    await renderScreen();
     await waitFor(() => expect(screen.getByTestId('enviada-protocolo')).toBeTruthy());
     expect(screen.queryByTestId('enviada-foto-pendente')).toBeNull();
   });
 
   it('tells the user the photo can be added later when the upload failed', async () => {
-    renderScreen({ id: '187', fotoPendente: '1' });
+    await renderScreen({ id: '187', fotoPendente: '1' });
 
     expect(screen.getByTestId('enviada-foto-pendente')).toBeTruthy();
     expect(screen.getByText(/A foto não pôde ser enviada/)).toBeTruthy();
@@ -77,10 +77,10 @@ describe('DemandaEnviadaScreen', () => {
 
   it('shows a retryable error if the demand cannot be loaded', async () => {
     (obterDemanda as jest.Mock).mockRejectedValueOnce(new Error('Sem conexão')).mockResolvedValueOnce(demanda);
-    renderScreen();
+    await renderScreen();
 
     await waitFor(() => expect(screen.getByTestId('enviada-erro')).toBeTruthy());
-    fireEvent.press(screen.getByTestId('enviada-erro'));
+    await fireEvent.press(screen.getByTestId('enviada-erro'));
 
     await waitFor(() => expect(screen.getByTestId('enviada-protocolo')).toBeTruthy());
   });

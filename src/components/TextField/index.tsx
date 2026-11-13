@@ -9,8 +9,7 @@ import {
   type ReturnKeyTypeOptions,
   type TextInputProps,
   type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+  type ViewStyle, type TextInputInstance } from 'react-native';
 import Animated, {
   interpolateColor,
   useAnimatedStyle,
@@ -50,7 +49,7 @@ export type TextFieldProps = {
   autoComplete?: TextInputProps['autoComplete'];
   textContentType?: TextInputProps['textContentType'];
   /** React 19: ref como prop comum, aponta para o TextInput (ex.: focar o próximo campo). */
-  ref?: React.Ref<TextInput>;
+  ref?: React.Ref<TextInputInstance>;
   style?: StyleProp<ViewStyle>;
   testID?: string;
 };

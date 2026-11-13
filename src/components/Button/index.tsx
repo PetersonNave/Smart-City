@@ -2,7 +2,6 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  type GestureResponderEvent,
   type StyleProp,
   type TextStyle,
   type ViewStyle,
@@ -20,7 +19,8 @@ export type ButtonVariant = 'primary' | 'secondary' | 'surface' | 'outline' | 'd
 
 export type ButtonProps = {
   label: string;
-  onPress: (event: GestureResponderEvent) => void;
+  /** Os handlers do app não usam o evento (ex.: `handleSubmit(onSubmit)` do react-hook-form). */
+  onPress: () => void;
   variant?: ButtonVariant;
   icon?: IconName;
   disabled?: boolean;
@@ -93,7 +93,7 @@ export function Button({
     <Animated.View style={[styles.wrapper, animatedStyle, style]}>
       <Pressable
         testID={testID}
-        onPress={isInteractive ? onPress : undefined}
+        onPress={isInteractive ? () => onPress() : undefined}
         disabled={!isInteractive}
         accessibilityRole="button"
         accessibilityLabel={label}

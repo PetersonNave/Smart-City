@@ -19,7 +19,8 @@ export type TabBarProps = BottomTabBarProps & {
   icons: Record<string, IconName>;
 };
 
-export function TabBar({ state, descriptors, navigation, icons }: TabBarProps) {
+// expo-router 58: a tab bar customizada recebe `emitter` + `navigateToTab` (não mais `navigation`).
+export function TabBar({ state, descriptors, emitter, navigateToTab, icons }: TabBarProps) {
   const insets = useSafeAreaInsets();
 
   return (
@@ -32,9 +33,9 @@ export function TabBar({ state, descriptors, navigation, icons }: TabBarProps) {
           const color = isFocused ? colors.primary : palette.textSubtle;
 
           function onPress() {
-            const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+            const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
             if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name, route.params);
+              navigateToTab(route.key);
             }
           }
 
@@ -46,7 +47,7 @@ export function TabBar({ state, descriptors, navigation, icons }: TabBarProps) {
               accessibilityState={{ selected: isFocused }}
               accessibilityLabel={label}
               onPress={onPress}
-              onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}
+              onLongPress={() => emitter.emit({ type: 'tabLongPress', target: route.key })}
               style={styles.tab}
             >
               <Icon name={icons[route.name]} size={22} color={color} />

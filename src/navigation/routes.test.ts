@@ -1,7 +1,7 @@
 import { demandaAtualizadaRoute, parseEditFeedback, parseIdParam, routes } from './routes';
 
 describe('routes helpers', () => {
-  it('parses only positive integer ids from the URL', () => {
+  it('parses only positive integer ids from the URL', async () => {
     expect(parseIdParam('187')).toBe(187);
     expect(parseIdParam(['7', '8'])).toBe(7);
     expect(parseIdParam('abc')).toBeNull();
@@ -10,7 +10,7 @@ describe('routes helpers', () => {
     expect(parseIdParam(undefined)).toBeNull();
   });
 
-  it('round-trips the edit feedback through URL params', () => {
+  it('round-trips the edit feedback through URL params', async () => {
     const route = demandaAtualizadaRoute(7, { at: 123, localizacaoAtualizada: true, fotoFalhou: false });
 
     expect(route.params.id).toBe('7');
@@ -18,7 +18,7 @@ describe('routes helpers', () => {
     expect(parseEditFeedback({ id: '7' })).toBeUndefined();
   });
 
-  it('only adds fotoPendente to the confirmation route when the upload failed', () => {
+  it('only adds fotoPendente to the confirmation route when the upload failed', async () => {
     expect(routes.demandaEnviada(5, false).params).toEqual({ id: '5' });
     expect(routes.demandaEnviada(5, true).params).toEqual({ id: '5', fotoPendente: '1' });
   });

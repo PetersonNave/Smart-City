@@ -7,8 +7,8 @@ const options = [
 ] as const;
 
 describe('SelectField', () => {
-  it('shows the placeholder until a value is chosen', () => {
-    render(
+  it('shows the placeholder until a value is chosen', async () => {
+    await render(
       <SelectField
         label="Categoria"
         placeholder="Selecione uma Categoria"
@@ -21,9 +21,9 @@ describe('SelectField', () => {
     expect(screen.getByText('Selecione uma Categoria')).toBeTruthy();
   });
 
-  it('opens the option sheet and reports the chosen value', () => {
+  it('opens the option sheet and reports the chosen value', async () => {
     const onChange = jest.fn();
-    render(
+    await render(
       <SelectField
         label="Categoria"
         placeholder="Selecione uma Categoria"
@@ -34,14 +34,14 @@ describe('SelectField', () => {
       />
     );
 
-    fireEvent.press(screen.getByTestId('categoria-trigger'));
-    fireEvent.press(screen.getByTestId('categoria-option-SANITATION'));
+    await fireEvent.press(screen.getByTestId('categoria-trigger'));
+    await fireEvent.press(screen.getByTestId('categoria-option-SANITATION'));
 
     expect(onChange).toHaveBeenCalledWith('SANITATION');
   });
 
-  it('shows the selected label and the error message', () => {
-    render(
+  it('shows the selected label and the error message', async () => {
+    await render(
       <SelectField
         label="Categoria"
         placeholder="Selecione uma Categoria"

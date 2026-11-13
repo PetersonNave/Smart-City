@@ -13,23 +13,23 @@ function renderScreen() {
   return render(<CadastroScreen />);
 }
 
-function fillValidForm() {
-  fireEvent.changeText(screen.getByTestId('cadastro-username-input'), 'testuser');
-  fireEvent.changeText(screen.getByTestId('cadastro-email-input'), 'test@example.com');
-  fireEvent.changeText(screen.getByTestId('cadastro-password-input'), '123456');
-  fireEvent.changeText(screen.getByTestId('cadastro-confirmPassword-input'), '123456');
+async function fillValidForm() {
+  await fireEvent.changeText(screen.getByTestId('cadastro-username-input'), 'testuser');
+  await fireEvent.changeText(screen.getByTestId('cadastro-email-input'), 'test@example.com');
+  await fireEvent.changeText(screen.getByTestId('cadastro-password-input'), '123456');
+  await fireEvent.changeText(screen.getByTestId('cadastro-confirmPassword-input'), '123456');
 }
 
 describe('CadastroScreen', () => {
-  afterEach(() => jest.clearAllMocks());
+  afterEach(async () => jest.clearAllMocks());
 
   it('shows a validation error when passwords do not match', async () => {
     (useAuth as jest.Mock).mockReturnValue({ register: jest.fn() });
-    renderScreen();
+    await renderScreen();
 
-    fillValidForm();
-    fireEvent.changeText(screen.getByTestId('cadastro-confirmPassword-input'), 'different');
-    fireEvent.press(screen.getByTestId('cadastro-submit'));
+    await fillValidForm();
+    await fireEvent.changeText(screen.getByTestId('cadastro-confirmPassword-input'), 'different');
+    await fireEvent.press(screen.getByTestId('cadastro-submit'));
 
     await waitFor(() => expect(screen.getByText('As senhas não coincidem')).toBeTruthy());
   });
@@ -37,10 +37,10 @@ describe('CadastroScreen', () => {
   it('calls useAuth().register with the typed data on valid submit', async () => {
     const register = jest.fn().mockResolvedValue(undefined);
     (useAuth as jest.Mock).mockReturnValue({ register });
-    renderScreen();
+    await renderScreen();
 
-    fillValidForm();
-    fireEvent.press(screen.getByTestId('cadastro-submit'));
+    await fillValidForm();
+    await fireEvent.press(screen.getByTestId('cadastro-submit'));
 
     await waitFor(() => expect(register).toHaveBeenCalledWith('testuser', 'test@example.com', '123456'));
   });
@@ -52,33 +52,33 @@ describe('CadastroScreen', () => {
         new ApiValidationError('Erro de validação', { email: ['E-mail já cadastrado.'] })
       );
     (useAuth as jest.Mock).mockReturnValue({ register });
-    renderScreen();
+    await renderScreen();
 
-    fillValidForm();
-    fireEvent.press(screen.getByTestId('cadastro-submit'));
+    await fillValidForm();
+    await fireEvent.press(screen.getByTestId('cadastro-submit'));
 
     await waitFor(() => expect(screen.getByText('E-mail já cadastrado.')).toBeTruthy());
   });
 });
 
 describe('CadastroScreen navigation', () => {
-  beforeEach(() => (useAuth as jest.Mock).mockReturnValue({ register: jest.fn() }));
-  afterEach(() => jest.clearAllMocks());
+  beforeEach(async () => (useAuth as jest.Mock).mockReturnValue({ register: jest.fn() }));
+  afterEach(async () => jest.clearAllMocks());
 
-  it('goes back to the login it came from', () => {
+  it('goes back to the login it came from', async () => {
     mockRouter.canGoBack.mockReturnValue(true);
-    renderScreen();
+    await renderScreen();
 
-    fireEvent.press(screen.getByTestId('go-to-login'));
+    await fireEvent.press(screen.getByTestId('go-to-login'));
 
     expect(mockRouter.back).toHaveBeenCalled();
   });
 
-  it('opens /login when there is nothing to go back to (deep link straight to /cadastro)', () => {
+  it('opens /login when there is nothing to go back to (deep link straight to /cadastro)', async () => {
     mockRouter.canGoBack.mockReturnValue(false);
-    renderScreen();
+    await renderScreen();
 
-    fireEvent.press(screen.getByTestId('go-to-login'));
+    await fireEvent.press(screen.getByTestId('go-to-login'));
 
     expect(mockRouter.replace).toHaveBeenCalledWith('/login');
   });

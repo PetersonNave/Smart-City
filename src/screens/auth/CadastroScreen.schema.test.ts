@@ -8,15 +8,15 @@ describe('cadastroSchema', () => {
     confirmPassword: '123456',
   };
 
-  it('accepts valid, matching data', () => {
+  it('accepts valid, matching data', async () => {
     expect(cadastroSchema.safeParse(base).success).toBe(true);
   });
 
-  it('rejects a username shorter than 3 characters', () => {
+  it('rejects a username shorter than 3 characters', async () => {
     expect(cadastroSchema.safeParse({ ...base, username: 'ab' }).success).toBe(false);
   });
 
-  it('rejects mismatched passwords', () => {
+  it('rejects mismatched passwords', async () => {
     const result = cadastroSchema.safeParse({ ...base, confirmPassword: 'different' });
 
     expect(result.success).toBe(false);

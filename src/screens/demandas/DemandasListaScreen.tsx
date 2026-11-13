@@ -200,7 +200,7 @@ export function DemandasListaScreen() {
           }
           onEndReachedThreshold={0.3}
           onEndReached={loadMore}
-          ListFooterComponent={isLoadingMore ? <Loading color={palette.white} size="small" /> : null}
+          ListFooterComponent={isLoadingMore ? <Loading color={palette.white} size="small" /> : undefined}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           ListEmptyComponent={

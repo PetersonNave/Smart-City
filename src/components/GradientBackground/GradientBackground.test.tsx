@@ -11,8 +11,8 @@ jest.mock('expo-linear-gradient', () => ({
 
 import { GradientBackground } from './index';
 describe('GradientBackground', () => {
-  it('renders its children', () => {
-    const { getByText } = render(
+  it('renders its children', async () => {
+    const { getByText } = await render(
       <GradientBackground>
         <Text>Oi</Text>
       </GradientBackground>
@@ -20,8 +20,8 @@ describe('GradientBackground', () => {
     expect(getByText('Oi')).toBeTruthy();
   });
 
-  it('uses the Figma brand gradient (green → teal → navy at 90%) by default', () => {
-    const { getByTestId } = render(<GradientBackground testID="gradient" />);
+  it('uses the Figma brand gradient (green → teal → navy at 90%) by default', async () => {
+    const { getByTestId } = await render(<GradientBackground testID="gradient" />);
     expect(getByTestId('gradient').props.colors).toEqual([
       'rgba(86, 197, 150, 0.9)',
       'rgba(50, 157, 156, 0.9)',
@@ -29,8 +29,8 @@ describe('GradientBackground', () => {
     ]);
   });
 
-  it('uses the teal → green gradient for the screen variant', () => {
-    const { getByTestId } = render(<GradientBackground variant="screen" testID="gradient" />);
+  it('uses the teal → green gradient for the screen variant', async () => {
+    const { getByTestId } = await render(<GradientBackground variant="screen" testID="gradient" />);
     expect(getByTestId('gradient').props.colors).toEqual([
       'rgba(50, 157, 156, 0.9)',
       'rgba(86, 197, 150, 0.9)',

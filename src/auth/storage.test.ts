@@ -4,7 +4,7 @@ import { getStoredTokens, setStoredTokens, clearStoredTokens } from './storage';
 jest.mock('expo-secure-store');
 
 describe('storage', () => {
-  afterEach(() => jest.clearAllMocks());
+  afterEach(async () => jest.clearAllMocks());
 
   it('returns null when nothing is stored', async () => {
     (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);

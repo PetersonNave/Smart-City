@@ -7,14 +7,14 @@ const options = [
 ] as const;
 
 describe('SegmentedControl', () => {
-  it('marks the active option as selected and reports presses', () => {
+  it('marks the active option as selected and reports presses', async () => {
     const onChange = jest.fn();
-    render(<SegmentedControl options={[...options]} value="TODAS" onChange={onChange} testID="status" />);
+    await render(<SegmentedControl options={[...options]} value="TODAS" onChange={onChange} testID="status" />);
 
     expect(screen.getByTestId('status-TODAS').props.accessibilityState).toEqual({ selected: true });
     expect(screen.getByTestId('status-PENDING').props.accessibilityState).toEqual({ selected: false });
 
-    fireEvent.press(screen.getByTestId('status-PENDING'));
+    await fireEvent.press(screen.getByTestId('status-PENDING'));
     expect(onChange).toHaveBeenCalledWith('PENDING');
   });
 });

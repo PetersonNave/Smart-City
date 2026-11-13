@@ -13,22 +13,22 @@ function renderScreen() {
 }
 
 describe('LoginScreen', () => {
-  afterEach(() => jest.clearAllMocks());
+  afterEach(async () => jest.clearAllMocks());
 
-  it('goes to /cadastro from the sign-up link', () => {
+  it('goes to /cadastro from the sign-up link', async () => {
     (useAuth as jest.Mock).mockReturnValue({ login: jest.fn() });
-    renderScreen();
+    await renderScreen();
 
-    fireEvent.press(screen.getByTestId('go-to-cadastro'));
+    await fireEvent.press(screen.getByTestId('go-to-cadastro'));
 
     expect(mockRouter.push).toHaveBeenCalledWith('/cadastro');
   });
 
   it('shows validation errors for empty fields on submit', async () => {
     (useAuth as jest.Mock).mockReturnValue({ login: jest.fn() });
-    renderScreen();
+    await renderScreen();
 
-    fireEvent.press(screen.getByTestId('login-submit'));
+    await fireEvent.press(screen.getByTestId('login-submit'));
 
     await waitFor(() => expect(screen.getByText('Informe seu e-mail')).toBeTruthy());
   });
@@ -36,11 +36,11 @@ describe('LoginScreen', () => {
   it('calls useAuth().login with the typed credentials on valid submit', async () => {
     const login = jest.fn().mockResolvedValue(undefined);
     (useAuth as jest.Mock).mockReturnValue({ login });
-    renderScreen();
+    await renderScreen();
 
-    fireEvent.changeText(screen.getByTestId('login-email-input'), 'test@example.com');
-    fireEvent.changeText(screen.getByTestId('login-password-input'), '123456');
-    fireEvent.press(screen.getByTestId('login-submit'));
+    await fireEvent.changeText(screen.getByTestId('login-email-input'), 'test@example.com');
+    await fireEvent.changeText(screen.getByTestId('login-password-input'), '123456');
+    await fireEvent.press(screen.getByTestId('login-submit'));
 
     await waitFor(() => expect(login).toHaveBeenCalledWith('test@example.com', '123456'));
   });
@@ -48,11 +48,11 @@ describe('LoginScreen', () => {
   it('shows an error banner when login rejects', async () => {
     const login = jest.fn().mockRejectedValue(new Error('E-mail ou senha incorretos.'));
     (useAuth as jest.Mock).mockReturnValue({ login });
-    renderScreen();
+    await renderScreen();
 
-    fireEvent.changeText(screen.getByTestId('login-email-input'), 'test@example.com');
-    fireEvent.changeText(screen.getByTestId('login-password-input'), '123456');
-    fireEvent.press(screen.getByTestId('login-submit'));
+    await fireEvent.changeText(screen.getByTestId('login-email-input'), 'test@example.com');
+    await fireEvent.changeText(screen.getByTestId('login-password-input'), '123456');
+    await fireEvent.press(screen.getByTestId('login-submit'));
 
     await waitFor(() => expect(screen.getByText('E-mail ou senha incorretos.')).toBeTruthy());
   });
@@ -60,14 +60,14 @@ describe('LoginScreen', () => {
   it('submits from the keyboard "go" key on the password field, with autofill hints set', async () => {
     const login = jest.fn().mockResolvedValue(undefined);
     (useAuth as jest.Mock).mockReturnValue({ login });
-    renderScreen();
+    await renderScreen();
 
     expect(screen.getByTestId('login-email-input').props.textContentType).toBe('emailAddress');
     expect(screen.getByTestId('login-password-input').props.autoComplete).toBe('current-password');
 
-    fireEvent.changeText(screen.getByTestId('login-email-input'), 'test@example.com');
-    fireEvent.changeText(screen.getByTestId('login-password-input'), '123456');
-    fireEvent(screen.getByTestId('login-password-input'), 'submitEditing');
+    await fireEvent.changeText(screen.getByTestId('login-email-input'), 'test@example.com');
+    await fireEvent.changeText(screen.getByTestId('login-password-input'), '123456');
+    await fireEvent(screen.getByTestId('login-password-input'), 'submitEditing');
 
     await waitFor(() => expect(login).toHaveBeenCalledWith('test@example.com', '123456'));
   });

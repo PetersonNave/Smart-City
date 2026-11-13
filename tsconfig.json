@@ -1,6 +1,9 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    // TypeScript 6 não inclui mais todos os @types automaticamente: os globais do Jest
+    // (describe, it, expect, jest) precisam ser declarados aqui.
+    "types": ["jest", "node"]
   }
 }

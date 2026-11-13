@@ -3,40 +3,40 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { Button } from './index';
 
 describe('Button', () => {
-  it('calls onPress when pressed and enabled', () => {
+  it('calls onPress when pressed and enabled', async () => {
     const onPress = jest.fn();
-    const { getByTestId } = render(<Button label="Entrar" onPress={onPress} testID="btn" />);
+    const { getByTestId } = await render(<Button label="Entrar" onPress={onPress} testID="btn" />);
 
-    fireEvent.press(getByTestId('btn'));
+    await fireEvent.press(getByTestId('btn'));
 
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
-  it('does not call onPress when disabled', () => {
+  it('does not call onPress when disabled', async () => {
     const onPress = jest.fn();
-    const { getByTestId } = render(
+    const { getByTestId } = await render(
       <Button label="Entrar" onPress={onPress} disabled testID="btn" />,
     );
 
-    fireEvent.press(getByTestId('btn'));
+    await fireEvent.press(getByTestId('btn'));
 
     expect(onPress).not.toHaveBeenCalled();
   });
 
-  it('shows a loading indicator and blocks presses while loading', () => {
+  it('shows a loading indicator and blocks presses while loading', async () => {
     const onPress = jest.fn();
-    const { getByTestId, queryByText } = render(
+    const { getByTestId, queryByText } = await render(
       <Button label="Entrar" onPress={onPress} loading testID="btn" />,
     );
 
-    fireEvent.press(getByTestId('btn'));
+    await fireEvent.press(getByTestId('btn'));
 
     expect(onPress).not.toHaveBeenCalled();
     expect(queryByText('Entrar')).toBeNull();
   });
 
-  it('renders the danger variant with the Figma red background', () => {
-    const { getByTestId } = render(<Button label="Excluir" variant="danger" onPress={jest.fn()} testID="btn" />);
+  it('renders the danger variant with the Figma red background', async () => {
+    const { getByTestId } = await render(<Button label="Excluir" variant="danger" onPress={jest.fn()} testID="btn" />);
 
     expect(StyleSheet.flatten(getByTestId('btn').props.style).backgroundColor).toBe('#EF5350');
   });

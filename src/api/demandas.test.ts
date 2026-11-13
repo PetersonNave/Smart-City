@@ -31,7 +31,7 @@ function envelope<T>(data: T, status_code = 200) {
 }
 
 describe('demandas api', () => {
-  afterEach(() => {
+  afterEach(async () => {
     jest.restoreAllMocks();
     jest.clearAllMocks();
   });
