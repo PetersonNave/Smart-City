@@ -10,13 +10,13 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://smart-city-0r5m.onrender.com"
+        "EXPO_PUBLIC_API_URL": "https://smart-city-z13w.onrender.com"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://smart-city-0r5m.onrender.com"
+        "EXPO_PUBLIC_API_URL": "https://smart-city-z13w.onrender.com"
       }
     }
   },
