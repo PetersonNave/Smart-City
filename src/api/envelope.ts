@@ -22,6 +22,18 @@ export class ApiValidationError extends Error {
 export const NETWORK_ERROR_MESSAGE =
   'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.';
 
+/** Falha sem resposta do servidor (offline, DNS, timeout): é o caso em que vale usar o cache local. */
+export class NetworkError extends Error {
+  constructor(message: string = NETWORK_ERROR_MESSAGE) {
+    super(message);
+    this.name = 'NetworkError';
+  }
+}
+
+export function isNetworkError(error: unknown): error is NetworkError {
+  return error instanceof NetworkError;
+}
+
 function hasFieldErrors(data: unknown): data is { errors: ApiFieldErrors } {
   return typeof data === 'object' && data !== null && 'errors' in data;
 }
@@ -42,7 +54,7 @@ export async function unwrap<T>(promise: Promise<{ data: ApiEnvelope<T> }>): Pro
       }
       if (!error.response) {
         // Sem resposta = servidor inacessível ou timeout (ECONNABORTED / ETIMEDOUT).
-        throw new Error(NETWORK_ERROR_MESSAGE);
+        throw new NetworkError();
       }
     }
     throw error;

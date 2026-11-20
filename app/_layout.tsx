@@ -9,12 +9,15 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../src/auth/AuthContext';
 import { LoadingScreen } from '../src/screens/LoadingScreen';
 import { fontAssets } from '../src/theme';
+import { useOtaUpdates } from '../src/updates/useOtaUpdates';
 
 SplashScreen.preventAutoHideAsync();
 
 // Layout raiz: fontes, providers globais e a proteção de rotas pela sessão.
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts(fontAssets);
+  // Atualizações OTA (expo-updates): baixa em segundo plano e oferece reiniciar.
+  useOtaUpdates();
 
   useEffect(() => {
     if (fontsLoaded || fontError) {

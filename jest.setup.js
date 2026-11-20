@@ -41,10 +41,25 @@ console.error = (...args) => {
 };
 
 // O demandStore (Zustand) é global: cada teste começa com a lista/filtros/cache vazios.
-beforeEach(() => {
+beforeEach(async () => {
   const store = jest.requireActual('./src/stores/demandStore');
   store.useDemandStore.getState().reset();
+  // O cache offline (AsyncStorage) também começa vazio em cada teste.
+  await require('@react-native-async-storage/async-storage').clear();
 });
+
+// AsyncStorage (cache offline) usa o mock em memória oficial da biblioteca.
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
+
+// expo-updates é nativo e fica desligado nos testes (como em desenvolvimento).
+jest.mock('expo-updates', () => ({
+  isEnabled: false,
+  checkForUpdateAsync: jest.fn().mockResolvedValue({ isAvailable: false }),
+  fetchUpdateAsync: jest.fn().mockResolvedValue({ isNew: false }),
+  reloadAsync: jest.fn().mockResolvedValue(undefined),
+}));
 
 // expo-notifications depende de módulo nativo: nos testes, um mock que não faz nada
 // (cada teste pode sobrescrever os retornos com mockResolvedValue).

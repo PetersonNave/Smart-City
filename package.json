@@ -7,6 +7,7 @@
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@expo-google-fonts/source-sans-3": "^0.4.1",
     "@hookform/resolvers": "^5.9.1",
+    "@react-native-async-storage/async-storage": "^2.2.0",
     "axios": "^1.20.0",
     "expo": "~58.0.25",
     "expo-asset": "~58.0.21",
@@ -22,6 +23,7 @@
     "expo-secure-store": "~58.0.3",
     "expo-splash-screen": "~58.0.14",
     "expo-status-bar": "~58.0.5",
+    "expo-updates": "~58.0.22",
     "lucide-react-native": "^1.47.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
@@ -54,7 +56,9 @@
     "web": "expo start --web",
     "test": "jest",
     "build:apk": "npx --yes eas-cli@latest build --platform android --profile preview",
-    "build:ios": "npx --yes eas-cli@latest build --platform ios --profile preview"
+    "build:ios": "npx --yes eas-cli@latest build --platform ios --profile preview",
+    "update:preview": "npx --yes eas-cli@latest update --channel preview",
+    "update:production": "npx --yes eas-cli@latest update --channel production"
   },
   "private": true,
   "jest": {

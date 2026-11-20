@@ -8,11 +8,15 @@ import {
   logout as apiLogout,
   type AuthUser,
 } from '../api/auth';
+import { isNetworkError } from '../api/envelope';
 import { useDemandStore } from '../stores/demandStore';
+import { CACHE_KEYS, clearCache, readCache, writeCache } from '../storage/cache';
 
-// Ao trocar de sessão, nada da conta anterior pode continuar em cache (demandas, filtros).
-function clearSessionData() {
+// Ao trocar de sessão, nada da conta anterior pode continuar em cache (demandas, filtros),
+// nem na memória nem no AsyncStorage.
+async function clearSessionData() {
   useDemandStore.getState().reset();
+  await clearCache();
 }
 
 export type AuthStatus = 'bootstrapping' | 'guest' | 'authenticated';
@@ -42,11 +46,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       try {
         const me = await getMe();
+        await writeCache(CACHE_KEYS.sessionUser, me);
         if (isMounted) {
           setUser(me);
           setStatus('authenticated');
         }
-      } catch {
+      } catch (error) {
+        // Sem conexão a sessão é preservada com o último usuário salvo: o app abre com os
+        // dados em cache e as chamadas voltam a funcionar (com refresh de token) quando a rede voltar.
+        if (isNetworkError(error)) {
+          const cached = await readCache<AuthUser>(CACHE_KEYS.sessionUser);
+          if (cached) {
+            if (isMounted) {
+              setUser(cached.value);
+              setStatus('authenticated');
+            }
+            return;
+          }
+        }
         await clearStoredTokens();
         if (isMounted) setStatus('guest');
       }
@@ -62,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Se o interceptor do axios falhar ao renovar o token em qualquer
     // chamada futura, força o app de volta pro estado deslogado.
     setOnRefreshFailure(() => {
-      clearSessionData();
+      void clearSessionData();
       setUser(null);
       setStatus('guest');
     });
@@ -72,7 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     const result = await apiLogin({ email, password });
     await setStoredTokens({ accessToken: result.access_token, refreshToken: result.refresh_token });
-    clearSessionData();
+    await clearSessionData();
+    await writeCache(CACHE_KEYS.sessionUser, result.user);
     setUser(result.user);
     setStatus('authenticated');
   }, []);
@@ -93,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Sem rede ou token já expirado: os tokens locais são limpos de todo modo.
     }
     await clearStoredTokens();
-    clearSessionData();
+    await clearSessionData();
     setUser(null);
     setStatus('guest');
   }, []);

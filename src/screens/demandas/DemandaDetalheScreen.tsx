@@ -14,6 +14,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusBadge } from '../../components/StatusBadge';
 import { useTabBarInset } from '../../components/TabBar';
 import { Toast } from '../../components/Toast';
+import { OfflineBanner } from '../../components/OfflineBanner';
 import {
   CATEGORIA_LABELS,
   REGIAO_LABELS,
@@ -54,6 +55,8 @@ export function DemandaDetalheScreen() {
   const [toast, setToast] = useState<{ message: string; tone: 'success' | 'warning' } | null>(null);
   const [isChangingStatus, setIsChangingStatus] = useState(false);
   const { fetchOne, changeStatus } = useDemandStore.getState();
+  const isOffline = useDemandStore((state) => state.isOffline);
+  const offlineSavedAt = useDemandStore((state) => state.offlineSavedAt);
 
   const load = useCallback(async () => {
     if (!id) {
@@ -122,6 +125,7 @@ export function DemandaDetalheScreen() {
 
       <View style={styles.feedback}>
         <Toast message={toast?.message ?? null} tone={toast?.tone} onHide={hideToast} testID="detalhe-toast" />
+        {demanda && !error && isOffline && <OfflineBanner savedAt={offlineSavedAt} testID="detalhe-offline" />}
       </View>
 
       {!demanda && !error && (

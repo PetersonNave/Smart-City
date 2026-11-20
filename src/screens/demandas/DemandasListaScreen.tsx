@@ -21,6 +21,7 @@ import { SegmentedControl, type SegmentOption } from '../../components/Segmented
 import { SelectField, type SelectOption } from '../../components/SelectField';
 import { useTabBarInset } from '../../components/TabBar';
 import { Toast } from '../../components/Toast';
+import { OfflineBanner } from '../../components/OfflineBanner';
 import {
   CATEGORIA_LABELS,
   CATEGORIA_OPTIONS,
@@ -70,6 +71,8 @@ export function DemandasListaScreen() {
   const isLoadingMore = useDemandStore((state) => state.isLoadingMore);
   const isFiltering = useDemandStore((state) => state.isFiltering);
   const filtros = useDemandStore((state) => state.filters);
+  const isOffline = useDemandStore((state) => state.isOffline);
+  const offlineSavedAt = useDemandStore((state) => state.offlineSavedAt);
   const { loadFirstPage, retryFirstLoad, loadMore, setFilters, clearFilters, remove, setListError } =
     useDemandStore.getState();
 
@@ -164,6 +167,7 @@ export function DemandasListaScreen() {
       <View style={styles.feedback}>
         {isFiltering && <Loading color={palette.white} size="small" testID="demandas-filtrando" />}
         <Toast message={toast} onHide={hideToast} testID="demandas-toast" />
+        {status === 'ready' && isOffline && <OfflineBanner savedAt={offlineSavedAt} testID="demandas-offline" />}
         {status === 'ready' && loadError && (
           <Text style={styles.inlineError} testID="demandas-inline-error">
             {loadError}

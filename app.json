@@ -58,6 +58,15 @@
       "expo-router"
     ],
     "scheme": "resolveai",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "enabled": true,
+      "url": "https://u.expo.dev/fa4473b4-f537-4fd9-8368-c33582947e19",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
     "extra": {
       "router": {},
       "eas": {

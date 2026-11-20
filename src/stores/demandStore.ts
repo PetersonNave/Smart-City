@@ -10,6 +10,8 @@ import {
   type DemandaStatus,
   type ListarDemandasParams,
 } from '../api/demandas';
+import { isNetworkError } from '../api/envelope';
+import { CACHE_KEYS, readCache, writeCache } from '../storage/cache';
 
 export const DEMANDAS_PER_PAGE = 10;
 
@@ -58,6 +60,10 @@ type DemandStoreState = {
   /** Recarregando por mudança de filtro com a lista já exibida (indicador discreto). */
   isFiltering: boolean;
   hasLoadedOnce: boolean;
+  /** A tela está mostrando dados do cache local porque a API não respondeu (sem conexão). */
+  isOffline: boolean;
+  /** Quando os dados offline exibidos foram salvos (ISO), para o aviso na tela. */
+  offlineSavedAt: string | null;
 };
 
 type DemandStoreActions = {
@@ -95,7 +101,36 @@ const INITIAL_STATE: DemandStoreState = {
   isLoadingMore: false,
   isFiltering: false,
   hasLoadedOnce: false,
+  isOffline: false,
+  offlineSavedAt: null,
 };
+
+/** Primeira página salva no AsyncStorage (só a lista sem filtros, que é a tela inicial). */
+type CachedLista = { items: Demanda[]; hasNextPage: boolean };
+
+function hasActiveFilters(filters: DemandaFiltros) {
+  return Boolean(filters.q || filters.status || filters.categoria || filters.regiao);
+}
+
+function normalize(text: string) {
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+/** Offline, os filtros são aplicados localmente sobre o que estiver em cache. */
+function applyFiltersLocally(demandas: Demanda[], filters: DemandaFiltros) {
+  const q = filters.q ? normalize(filters.q) : null;
+  return demandas.filter(
+    (demanda) =>
+      (!filters.status || demanda.status === filters.status) &&
+      (!filters.categoria || demanda.category === filters.categoria) &&
+      (!filters.regiao || demanda.region === filters.regiao) &&
+      (!q || normalize(`${demanda.title} ${demanda.description} ${demanda.location}`).includes(q))
+  );
+}
+
+function persistById(byId: Record<number, Demanda>) {
+  void writeCache(CACHE_KEYS.demandasPorId, byId);
+}
 
 // Cada carga da primeira página ganha um número; respostas de buscas antigas que chegarem
 // depois (ex.: o usuário trocou o filtro no meio) são descartadas.
@@ -143,9 +178,45 @@ export const useDemandStore = create<DemandStore>()((set, get) => ({
         listError: null,
         listStatus: 'ready',
         hasLoadedOnce: true,
+        isOffline: false,
+        offlineSavedAt: null,
       }));
+      if (!hasActiveFilters(get().filters)) {
+        void writeCache<CachedLista>(CACHE_KEYS.demandasLista, {
+          items: result.demandas,
+          hasNextPage: result.paginacao.tem_proxima,
+        });
+      }
+      persistById(get().byId);
     } catch (error) {
       if (seq !== requestSeq) return;
+      if (isNetworkError(error)) {
+        const [lista, porId] = await Promise.all([
+          readCache<CachedLista>(CACHE_KEYS.demandasLista),
+          readCache<Record<number, Demanda>>(CACHE_KEYS.demandasPorId),
+        ]);
+        if (seq !== requestSeq) return;
+        if (lista || porId) {
+          // Junta a lista salva com as demandas abertas depois, sem repetir ids.
+          const cached = [...(lista?.value.items ?? [])];
+          const known = new Set(cached.map((item) => item.id));
+          Object.values(porId?.value ?? {}).forEach((item) => {
+            if (!known.has(item.id)) cached.push(item);
+          });
+          set((state) => ({
+            items: applyFiltersLocally(cached, state.filters),
+            byId: { ...(porId?.value ?? {}), ...state.byId },
+            page: 1,
+            hasNextPage: false,
+            listError: null,
+            listStatus: 'ready',
+            hasLoadedOnce: true,
+            isOffline: true,
+            offlineSavedAt: lista?.savedAt ?? porId?.savedAt ?? null,
+          }));
+          return;
+        }
+      }
       // Numa atualização em segundo plano, mantém a lista antiga visível (erro vira aviso em linha).
       set((state) => ({
         listError: errorMessage(error, 'Não foi possível carregar as demandas.'),
@@ -188,10 +259,26 @@ export const useDemandStore = create<DemandStore>()((set, get) => ({
   },
 
   fetchOne: async (id, options) => {
-    const demanda = await obterDemanda(id);
-    if (options?.notify !== false) reportStatusChanges(get().byId, [demanda]);
-    get().upsert(demanda);
-    return demanda;
+    try {
+      const demanda = await obterDemanda(id);
+      if (options?.notify !== false) reportStatusChanges(get().byId, [demanda]);
+      get().upsert(demanda);
+      set({ isOffline: false, offlineSavedAt: null });
+      return demanda;
+    } catch (error) {
+      // Sem conexão: devolve a última versão conhecida (memória ou AsyncStorage), se houver.
+      if (!isNetworkError(error)) throw error;
+      const inMemory = get().byId[id];
+      const cached = inMemory ? null : await readCache<Record<number, Demanda>>(CACHE_KEYS.demandasPorId);
+      const demanda = inMemory ?? cached?.value[id];
+      if (!demanda) throw error;
+      set((state) => ({
+        byId: { ...state.byId, [id]: demanda },
+        isOffline: true,
+        offlineSavedAt: cached?.savedAt ?? state.offlineSavedAt,
+      }));
+      return demanda;
+    }
   },
 
   upsert: (demanda) => {
@@ -200,6 +287,7 @@ export const useDemandStore = create<DemandStore>()((set, get) => ({
       byId: { ...state.byId, [demanda.id]: demanda },
       items: state.items.map((item) => (item.id === demanda.id ? demanda : item)),
     }));
+    persistById(get().byId);
   },
 
   remove: async (id) => {
@@ -209,6 +297,7 @@ export const useDemandStore = create<DemandStore>()((set, get) => ({
       delete byId[id];
       return { byId, items: state.items.filter((item) => item.id !== id) };
     });
+    persistById(get().byId);
   },
 
   changeStatus: async (id, status) => {
