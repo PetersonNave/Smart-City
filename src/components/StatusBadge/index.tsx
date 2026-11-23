@@ -1,7 +1,6 @@
-import { StyleSheet, Text, View } from 'react-native';
-import type { DemandaStatus } from '../../api/demandas';
+import { Text, View } from 'react-native';
+import type { DemandaStatus } from '../../types';
 import { STATUS_META } from '../../domain/demanda';
-import { fonts } from '../../theme';
 
 export type StatusBadgeProps = {
   status: DemandaStatus;
@@ -17,31 +16,17 @@ export function StatusBadge({ status, size = 'sm', testID }: StatusBadgeProps) {
   return (
     <View
       testID={testID}
-      style={[styles.badge, isMedium && styles.badgeMedium, { backgroundColor: meta.background }]}
+      className={`flex-row items-center gap-1 ${isMedium ? 'rounded-lg px-2.5 py-[5px]' : 'rounded-md px-2 py-1'}`}
+      // Cores por status vêm do domínio (STATUS_META), não de classes fixas.
+      style={{ backgroundColor: meta.background }}
     >
-      <Text style={[styles.label, isMedium && styles.labelMedium, { color: meta.color }]}>
+      <View className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: meta.color }} />
+      <Text
+        className={`font-inter-extrabold tracking-wide ${isMedium ? 'text-[11px]' : 'text-[9px]'}`}
+        style={{ color: meta.color }}
+      >
         {meta.label.toUpperCase()}
       </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  badgeMedium: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-  },
-  label: {
-    fontFamily: fonts.inter.extraBold,
-    fontSize: 9,
-  },
-  labelMedium: {
-    fontSize: 11,
-  },
-});

@@ -1,11 +1,11 @@
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import { fonts, palette } from '../../theme';
+import { Text, View } from 'react-native';
+import { palette } from '../../theme';
 import { Icon } from '../Icon';
 
 export type OfflineBannerProps = {
   /** Quando os dados exibidos foram salvos (ISO). Sem valor, mostra só o aviso. */
   savedAt?: string | null;
-  style?: StyleProp<ViewStyle>;
+  className?: string;
   testID?: string;
 };
 
@@ -17,42 +17,20 @@ function formatSavedAt(savedAt: string) {
 }
 
 // Aviso discreto (mesmo tom âmbar do Toast de warning) quando a tela mostra dados do cache local.
-export function OfflineBanner({ savedAt, style, testID = 'offline-banner' }: OfflineBannerProps) {
+export function OfflineBanner({ savedAt, className = '', testID = 'offline-banner' }: OfflineBannerProps) {
   const when = savedAt ? formatSavedAt(savedAt) : null;
   return (
-    <View style={[styles.banner, style]} testID={testID} accessibilityRole="alert">
-      <View style={styles.icon}>
+    <View
+      className={`flex-row items-center gap-2.5 rounded-xl border border-warningStrong/30 bg-warningSoft px-4 py-2.5 ${className}`}
+      testID={testID}
+      accessibilityRole="alert"
+    >
+      <View className="h-[18px] w-[18px] items-center justify-center rounded-full bg-warningStrong">
         <Icon name="alert" size={10} color={palette.white} strokeWidth={3} />
       </View>
-      <Text style={styles.text}>
+      <Text className="flex-1 font-inter-bold text-[13px] text-warningText">
         Sem conexão. Mostrando dados salvos{when ? ` em ${when}` : ''}.
       </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  banner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: palette.warningSoft,
-  },
-  icon: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: palette.warningStrong,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  text: {
-    flex: 1,
-    fontFamily: fonts.inter.bold,
-    fontSize: 13,
-    color: palette.warningText,
-  },
-});

@@ -1,5 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { fonts, palette } from '../../theme';
+import { Pressable, Text, View } from 'react-native';
+import { palette } from '../../theme';
 import { Icon } from '../Icon';
 
 export type ScreenHeaderProps = {
@@ -16,10 +16,10 @@ export type ScreenHeaderProps = {
 
 export function ScreenHeader({ title, onBack, variant = 'circle', testID = 'screen-header' }: ScreenHeaderProps) {
   const isCircle = variant === 'circle';
-  const sideSize = isCircle ? 40 : 32;
+  const side = isCircle ? 'h-10 w-10' : 'h-8 w-8';
 
   return (
-    <View style={styles.header} testID={testID}>
+    <View className="flex-row items-center justify-between gap-3 px-4 py-3" testID={testID}>
       {onBack ? (
         <Pressable
           testID={`${testID}-back`}
@@ -27,53 +27,21 @@ export function ScreenHeader({ title, onBack, variant = 'circle', testID = 'scre
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel="Voltar"
-          style={[styles.backButton, { width: sideSize, height: sideSize }, isCircle && styles.backCircle]}
+          className={`items-center justify-center active:opacity-70 ${side} ${isCircle ? 'rounded-full bg-headerButton' : ''}`}
         >
           <Icon name="chevronLeft" size={isCircle ? 18 : 28} color={palette.white} strokeWidth={isCircle ? 2.5 : 2} />
         </Pressable>
       ) : (
-        <View style={{ width: sideSize, height: sideSize }} />
+        <View className={side} />
       )}
       <Text
-        style={[styles.title, isCircle ? styles.titleCircle : styles.titlePlain]}
+        className={`flex-1 text-center text-white ${isCircle ? 'font-inter-bold text-xl' : 'font-inter-extrabold text-2xl'}`}
         numberOfLines={1}
         accessibilityRole="header"
       >
         {title}
       </Text>
-      <View style={{ width: sideSize, height: sideSize }} />
+      <View className={side} />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 12,
-  },
-  backButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backCircle: {
-    borderRadius: 20,
-    backgroundColor: palette.headerButton,
-  },
-  title: {
-    flex: 1,
-    textAlign: 'center',
-    color: palette.white,
-  },
-  titleCircle: {
-    fontFamily: fonts.inter.bold,
-    fontSize: 20,
-  },
-  titlePlain: {
-    fontFamily: fonts.inter.extraBold,
-    fontSize: 24,
-  },
-});

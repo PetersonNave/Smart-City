@@ -1,3 +1,4 @@
+import tokens from './tokens.json';
 // Importa cada peso pelo subcaminho: importar da raiz do pacote empacota TODOS os pesos
 // (dezenas de .ttf) no bundle, mesmo os que o app não usa.
 import { Inter_400Regular } from '@expo-google-fonts/inter/400Regular';
@@ -25,21 +26,5 @@ export const fontAssets = {
   JetBrainsMono_800ExtraBold,
 };
 
-export const fonts = {
-  inter: {
-    regular: 'Inter_400Regular',
-    medium: 'Inter_500Medium',
-    semiBold: 'Inter_600SemiBold',
-    bold: 'Inter_700Bold',
-    extraBold: 'Inter_800ExtraBold',
-  },
-  sourceSans3: {
-    regular: 'SourceSans3_400Regular',
-    semiBold: 'SourceSans3_600SemiBold',
-    extraBold: 'SourceSans3_800ExtraBold',
-  },
-  jetBrainsMono: {
-    regular: 'JetBrainsMono_400Regular',
-    extraBold: 'JetBrainsMono_800ExtraBold',
-  },
-} as const;
+// Nomes das famílias carregadas acima (definidos em tokens.json, também usados pelo Tailwind).
+export const fonts = tokens.fonts;

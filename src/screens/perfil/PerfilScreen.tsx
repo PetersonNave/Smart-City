@@ -1,11 +1,25 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../auth/AuthContext';
 import { Button } from '../../components/Button';
 import { GradientBackground } from '../../components/GradientBackground';
+import { Icon, type IconName } from '../../components/Icon';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { formatarData, isGestor, perfilLabel } from '../../domain/demanda';
-import { colors, fonts, palette } from '../../theme';
+import { colors } from '../../theme';
+
+const PERMISSOES: Record<'cidadao' | 'gestor', { icon: IconName; text: string }[]> = {
+  cidadao: [
+    { icon: 'camera', text: 'Registrar demandas com foto e localização' },
+    { icon: 'demands', text: 'Acompanhar o status das suas demandas' },
+    { icon: 'bell', text: 'Receber aviso quando o status mudar' },
+  ],
+  gestor: [
+    { icon: 'demands', text: 'Analisar as demandas de toda a cidade' },
+    { icon: 'check', text: 'Alterar o status das ocorrências' },
+    { icon: 'search', text: 'Acompanhar indicadores no painel' },
+  ],
+};
 
 // Dados da conta logada, o perfil de acesso (Cidadão x Gestor Público) e o logout.
 export function PerfilScreen() {
@@ -17,103 +31,42 @@ export function PerfilScreen() {
   return (
     <GradientBackground variant="screen" style={{ paddingTop: insets.top }}>
       <ScreenHeader title="Perfil" testID="perfil-header" />
-      <View style={styles.content}>
-        <View style={styles.card}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{inicial}</Text>
+      <View className="gap-4 px-4 pt-2">
+        <View className="items-center gap-2 rounded-card bg-white p-6 shadow-md">
+          <View className="mb-1 h-20 w-20 items-center justify-center rounded-full border-4 border-infoSoft bg-navy">
+            <Text className="font-inter-extrabold text-3xl text-white">{inicial}</Text>
           </View>
-          <Text style={styles.name} testID="perfil-nome">
+          <Text className="font-inter-extrabold text-xl text-text" testID="perfil-nome">
             {user?.name}
           </Text>
-          <Text style={styles.email}>{user?.email}</Text>
-          <View style={[styles.badge, gestor ? styles.badgeGestor : styles.badgeCidadao]} testID="perfil-role">
-            <Text style={[styles.badgeText, gestor ? styles.badgeTextGestor : styles.badgeTextCidadao]}>
+          <Text className="font-inter-medium text-sm text-textMuted">{user?.email}</Text>
+          <View
+            className={`mt-1 rounded-full px-3.5 py-1.5 ${gestor ? 'bg-infoSoft' : 'bg-successSoft'}`}
+            testID="perfil-role"
+          >
+            <Text className={`font-inter-bold text-[13px] ${gestor ? 'text-navy' : 'text-successStrong'}`}>
               {perfilLabel(user?.role)}
             </Text>
           </View>
-          {user?.createdAt ? <Text style={styles.since}>Conta criada em {formatarData(user.createdAt)}</Text> : null}
-          <Text style={styles.description}>
-            {gestor
-              ? 'Você analisa as demandas de toda a cidade, altera o status das ocorrências e acompanha os indicadores no painel.'
-              : 'Você registra problemas da cidade e acompanha o andamento das suas demandas. Avisaremos quando o status mudar.'}
-          </Text>
+          {user?.createdAt ? (
+            <Text className="font-inter-medium text-[13px] text-textSubtle">Conta criada em {formatarData(user.createdAt)}</Text>
+          ) : null}
         </View>
+
+        <View className="gap-3 rounded-card bg-white p-5 shadow-md">
+          <Text className="font-inter-bold text-xs uppercase text-primary">Com este perfil você pode</Text>
+          {PERMISSOES[gestor ? 'gestor' : 'cidadao'].map((item) => (
+            <View key={item.text} className="flex-row items-center gap-3">
+              <View className="h-9 w-9 items-center justify-center rounded-xl bg-infoSoft">
+                <Icon name={item.icon} size={18} color={colors.primary} />
+              </View>
+              <Text className="flex-1 font-inter-medium text-sm text-textMuted">{item.text}</Text>
+            </View>
+          ))}
+        </View>
+
         <Button label="Sair da conta" variant="surface" onPress={() => logout()} testID="perfil-logout" />
       </View>
     </GradientBackground>
   );
 }
-
-const styles = StyleSheet.create({
-  content: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    gap: 16,
-  },
-  card: {
-    alignItems: 'center',
-    backgroundColor: palette.white,
-    borderRadius: 20,
-    padding: 24,
-    gap: 8,
-  },
-  avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: palette.infoSoft,
-    marginBottom: 4,
-  },
-  avatarText: {
-    fontFamily: fonts.inter.extraBold,
-    fontSize: 30,
-    color: colors.navy,
-  },
-  name: {
-    fontFamily: fonts.inter.extraBold,
-    fontSize: 20,
-    color: palette.text,
-  },
-  email: {
-    fontFamily: fonts.inter.medium,
-    fontSize: 14,
-    color: palette.textMuted,
-  },
-  badge: {
-    borderRadius: 100,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    marginTop: 4,
-  },
-  badgeCidadao: {
-    backgroundColor: palette.successSoft,
-  },
-  badgeGestor: {
-    backgroundColor: palette.infoSoft,
-  },
-  badgeText: {
-    fontFamily: fonts.inter.bold,
-    fontSize: 13,
-  },
-  badgeTextCidadao: {
-    color: palette.successStrong,
-  },
-  badgeTextGestor: {
-    color: colors.navy,
-  },
-  since: {
-    fontFamily: fonts.inter.medium,
-    fontSize: 13,
-    color: palette.textSubtle,
-  },
-  description: {
-    fontFamily: fonts.inter.medium,
-    fontSize: 14,
-    lineHeight: 20,
-    color: palette.textMuted,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-});

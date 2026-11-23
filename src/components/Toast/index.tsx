@@ -1,14 +1,15 @@
 import { useEffect } from 'react';
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
-import { fonts, palette } from '../../theme';
+import { palette } from '../../theme';
 import { Icon } from '../Icon';
 
 export type ToastTone = 'success' | 'warning';
 
+// Classes por tom: o NativeWind precisa ver os nomes completos no código para gerá-las.
 const TONES = {
-  success: { background: palette.successSoft, icon: palette.success, text: palette.successStrong, glyph: 'check' },
-  warning: { background: palette.warningSoft, icon: palette.warningStrong, text: palette.warningText, glyph: 'alert' },
+  success: { box: 'bg-successSoft border-success/30', dot: 'bg-success', text: 'text-successStrong', glyph: 'check' },
+  warning: { box: 'bg-warningSoft border-warningStrong/30', dot: 'bg-warningStrong', text: 'text-warningText', glyph: 'alert' },
 } as const;
 
 export type ToastProps = {
@@ -24,7 +25,7 @@ export type ToastProps = {
 
 // Figma "success-toast": fundo verde claro, check num círculo verde, texto verde escuro.
 export function Toast({ message, onHide, tone = 'success', duration = 3000, style, testID = 'toast' }: ToastProps) {
-  const colorsForTone = TONES[tone];
+  const toneClasses = TONES[tone];
   useEffect(() => {
     if (!message) return;
     const timer = setTimeout(onHide, duration);
@@ -37,46 +38,17 @@ export function Toast({ message, onHide, tone = 'success', duration = 3000, styl
     <Animated.View
       entering={FadeInUp}
       exiting={FadeOutUp}
-      style={[styles.toast, { backgroundColor: colorsForTone.background }, style]}
+      style={style}
       testID={testID}
       accessibilityRole="alert"
       accessibilityLiveRegion="polite"
     >
-      <View style={[styles.check, { backgroundColor: colorsForTone.icon }]}>
-        <Icon name={colorsForTone.glyph} size={10} color={palette.white} strokeWidth={3} />
+      <View className={`flex-row items-center gap-2.5 rounded-xl border px-4 py-2.5 shadow-sm ${toneClasses.box}`}>
+        <View className={`h-[18px] w-[18px] items-center justify-center rounded-full ${toneClasses.dot}`}>
+          <Icon name={toneClasses.glyph} size={10} color={palette.white} strokeWidth={3} />
+        </View>
+        <Text className={`flex-1 font-inter-bold text-[13px] ${toneClasses.text}`}>{message}</Text>
       </View>
-      <Text style={[styles.text, { color: colorsForTone.text }]}>{message}</Text>
     </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  toast: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: palette.successSoft,
-    shadowColor: palette.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  check: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: palette.success,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  text: {
-    flex: 1,
-    fontFamily: fonts.inter.bold,
-    fontSize: 13,
-    color: palette.successStrong,
-  },
-});

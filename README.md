@@ -8,7 +8,7 @@ Este repositório contém apenas o front-end mobile. Ele consome a **mesma API**
 
 * **Framework:** Expo (React Native) com TypeScript
 * **Navegação:** Expo Router (rotas por arquivo em `/app`; `Stack.Protected` separa as telas de visitante e de usuário logado; abas com a tab bar customizada do Figma)
-* **Estilização:** StyleSheet do React Native + tokens em `src/theme` (cores, neutros e tipografia extraídos do Figma)
+* **Estilização:** [NativeWind](https://www.nativewind.dev) v4 (Tailwind CSS v3) nas telas e componentes refinados (Início, Perfil, Painel do Gestor, cards, cabeçalhos, avisos), com o restante em StyleSheet. Cores e fontes do Figma ficam em um só lugar, `src/theme/tokens.json`, lido tanto pelo `tailwind.config.js` (classes como `bg-primary`, `text-navy`, `font-inter-bold`, `rounded-card`) quanto pelo tema TypeScript (`src/theme`)
 * **Gerenciamento de Estado global:** Context API (`src/auth/AuthContext.tsx`, o *auth store*: sessão, usuário e perfil) e Zustand (`src/stores/demandStore.ts`: lista de demandas, filtros, paginação e cache por id, compartilhados entre lista, detalhe, edição e criação)
 * **Perfis:** Cidadão (registra e acompanha as próprias demandas) e Gestor Público (vê todas, altera o status). O perfil vem da API (`role`) e é exibido na Home e na aba Perfil
 * **Formulários:** react-hook-form + zod
@@ -114,7 +114,16 @@ Documentação complementar: [fluxo de autenticação](docs/auth-flow.md) e [tel
 
 ## 5 Localização da Documentação
 
-A documentação completa da API (compartilhada com a aplicação web) pode ser encontrada no link: https://documenter.getpostman.com/view/47073825/2sBXwvHTeT
+Documentação dos endpoints da API (compartilhada com a aplicação web):
+
+* **Swagger / OpenAPI (interativo):** https://smart-city-z13w.onrender.com/docs/ — localmente em `http://localhost:5000/docs/`. A especificação é o arquivo `backend/swagger.yaml` do [repositório do back-end](https://github.com/ndrfelipe/smart-city).
+* **Postman:** https://documenter.getpostman.com/view/47073825/2sBXwvHTeT
+
+Back-end, banco de dados e variáveis de ambiente do servidor (`DATABASE_URL`, `SECRET_KEY`, criação da conta de gestor): ver o README do [repositório do back-end](https://github.com/ndrfelipe/smart-city). Em resumo, o servidor cria as tabelas sozinho ao iniciar; em produção usa PostgreSQL (Render) e, localmente, qualquer banco aceito pelo SQLAlchemy.
+
+### 5.1 Vídeo demonstrativo
+
+Screencast do sistema completo integrado (cadastro/login → registro de demanda com foto e GPS → acompanhamento e filtros → atualização de status pelo gestor → notificação ao cidadão): **[link do vídeo](COLOQUE_AQUI_O_LINK_DO_VIDEO)**
 
 ---
 

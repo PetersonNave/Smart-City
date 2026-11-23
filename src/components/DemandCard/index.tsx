@@ -1,7 +1,7 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import type { Demanda } from '../../api/demandas';
-import { CATEGORIA_LABELS, formatarData } from '../../domain/demanda';
-import { colors, fonts, palette } from '../../theme';
+import { Pressable, Text, View } from 'react-native';
+import type { Demanda } from '../../types';
+import { CATEGORIA_LABELS, REGIAO_LABELS, formatarData } from '../../domain/demanda';
+import { colors, palette } from '../../theme';
 import { DemandThumb } from '../DemandThumb';
 import { Icon } from '../Icon';
 import { StatusBadge } from '../StatusBadge';
@@ -17,7 +17,7 @@ export type DemandCardProps = {
   testID?: string;
 };
 
-// Figma "demand-card" (frame "Analisar Demandas").
+// Figma "demand-card" (frame "Analisar Demandas"), refinado com NativeWind.
 export function DemandCard({ demanda, expanded = false, onToggle, onOpenDetails, onDelete, testID = 'demand-card' }: DemandCardProps) {
   return (
     <Pressable
@@ -26,21 +26,27 @@ export function DemandCard({ demanda, expanded = false, onToggle, onOpenDetails,
       accessibilityRole="button"
       accessibilityState={{ expanded }}
       accessibilityHint={expanded ? 'Recolhe os detalhes' : 'Mostra categoria e descrição'}
-      style={styles.card}
+      className={`gap-3 rounded-2xl border bg-white p-3.5 shadow-sm active:opacity-90 ${expanded ? 'border-primary/40' : 'border-border'}`}
     >
-      <View style={styles.header}>
+      <View className="flex-row items-center gap-3">
         <DemandThumb category={demanda.category} photoUrl={demanda.photoUrl} testID={`${testID}-thumb`} />
-        <View style={styles.info}>
-          <View style={styles.titleRow}>
-            <Text style={styles.title} numberOfLines={1}>
+        <View className="flex-1 gap-1">
+          <View className="flex-row items-center justify-between gap-2">
+            <Text className="flex-1 font-inter-bold text-sm text-text" numberOfLines={1}>
               {demanda.title}
             </Text>
             <StatusBadge status={demanda.status} testID={`${testID}-status`} />
           </View>
-          <Text style={styles.location} numberOfLines={1}>
-            {demanda.location}
+          <View className="flex-row items-center gap-1">
+            <Icon name="map" size={11} color={palette.textMuted} />
+            <Text className="flex-1 font-inter-medium text-xs text-textMuted" numberOfLines={1}>
+              {demanda.location}
+            </Text>
+          </View>
+          <Text className="font-inter-medium text-[10px] text-textSubtle">
+            Registrado em: {formatarData(demanda.createdAt)}
+            {demanda.region ? ` · ${REGIAO_LABELS[demanda.region]}` : ''}
           </Text>
-          <Text style={styles.date}>Registrado em: {formatarData(demanda.createdAt)}</Text>
         </View>
         {onDelete && (
           <Pressable
@@ -49,7 +55,7 @@ export function DemandCard({ demanda, expanded = false, onToggle, onOpenDetails,
             hitSlop={10}
             accessibilityRole="button"
             accessibilityLabel={`Excluir demanda ${demanda.title}`}
-            style={styles.deleteButton}
+            className="h-7 w-7 items-center justify-center rounded-lg border border-danger bg-dangerSoft active:opacity-70"
           >
             <Icon name="trash" size={14} color={palette.danger} />
           </Pressable>
@@ -57,14 +63,14 @@ export function DemandCard({ demanda, expanded = false, onToggle, onOpenDetails,
       </View>
 
       {expanded && (
-        <View style={styles.details} testID={`${testID}-details`}>
-          <View style={styles.inlineRow}>
-            <Text style={styles.detailLabel}>Categoria:</Text>
-            <Text style={styles.detailValue}>{CATEGORIA_LABELS[demanda.category]}</Text>
+        <View className="gap-2 border-t border-border pt-3" testID={`${testID}-details`}>
+          <View className="flex-row items-center gap-1.5">
+            <Text className="font-inter-bold text-[11px] uppercase text-primary">Categoria:</Text>
+            <Text className="font-inter-medium text-xs text-text">{CATEGORIA_LABELS[demanda.category]}</Text>
           </View>
-          <View style={styles.block}>
-            <Text style={styles.detailLabel}>Descrição do problema:</Text>
-            <Text style={styles.description}>{demanda.description}</Text>
+          <View className="gap-1">
+            <Text className="font-inter-bold text-[11px] uppercase text-primary">Descrição do problema:</Text>
+            <Text className="font-inter text-xs leading-4 text-textMuted">{demanda.description}</Text>
           </View>
           {onOpenDetails && (
             <Pressable
@@ -72,10 +78,10 @@ export function DemandCard({ demanda, expanded = false, onToggle, onOpenDetails,
               onPress={onOpenDetails}
               hitSlop={8}
               accessibilityRole="link"
-              style={styles.link}
+              className="mt-1 flex-row items-center justify-center gap-1.5 rounded-xl bg-infoSoft py-2.5 active:opacity-80"
             >
-              <Icon name="map" size={14} color={colors.primary} />
-              <Text style={styles.linkText}>Toque para ver os detalhes da demanda</Text>
+              <Text className="font-inter-semibold text-xs text-primary">Ver detalhes da demanda</Text>
+              <Icon name="chevronRight" size={14} color={colors.primary} />
             </Pressable>
           )}
         </View>
@@ -83,102 +89,3 @@ export function DemandCard({ demanda, expanded = false, onToggle, onOpenDetails,
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: palette.white,
-    borderWidth: 1,
-    borderColor: palette.border,
-    borderRadius: 16,
-    padding: 14,
-    gap: 12,
-    shadowColor: palette.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  info: {
-    flex: 1,
-    gap: 4,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  title: {
-    flex: 1,
-    fontFamily: fonts.inter.bold,
-    fontSize: 14,
-    color: palette.text,
-  },
-  location: {
-    fontFamily: fonts.inter.medium,
-    fontSize: 12,
-    color: palette.textMuted,
-  },
-  date: {
-    fontFamily: fonts.inter.medium,
-    fontSize: 10,
-    color: palette.textSubtle,
-  },
-  deleteButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: palette.danger,
-    backgroundColor: palette.dangerSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  details: {
-    borderTopWidth: 1,
-    borderColor: palette.border,
-    paddingTop: 12,
-    gap: 8,
-  },
-  inlineRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  block: {
-    gap: 4,
-  },
-  detailLabel: {
-    fontFamily: fonts.inter.bold,
-    fontSize: 11,
-    color: colors.primary,
-    textTransform: 'uppercase',
-  },
-  detailValue: {
-    fontFamily: fonts.inter.medium,
-    fontSize: 12,
-    color: palette.text,
-  },
-  description: {
-    fontFamily: fonts.inter.regular,
-    fontSize: 12,
-    lineHeight: 16,
-    color: palette.textMuted,
-  },
-  link: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingTop: 4,
-  },
-  linkText: {
-    fontFamily: fonts.inter.semiBold,
-    fontSize: 11,
-    color: colors.primary,
-  },
-});
