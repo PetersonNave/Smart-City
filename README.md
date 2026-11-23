@@ -131,6 +131,8 @@ Capturas de tela de cada etapa e o vídeo: [pasta "Resolve Aí - Artefatos" no G
 
 APK Android (perfil `preview`, Expo SDK 58, apontando para a API publicada): [página do build no EAS](https://expo.dev/accounts/peterson_meloo/projects/smart-city/builds/db219da0-17dd-4a7a-8f90-4b0d180aeb62) · [download do APK](https://expo.dev/artifacts/eas/BVc5EaJ6nLSNu6nxyWkHLp8H8uT_cqDOeT4YUImNT14.apk)
 
+Uma cópia do APK também está na [pasta "Resolve Aí - Artefatos" no Google Drive](https://drive.google.com/drive/folders/1AaSOULox6kcH_JVv3spxGQPBRpN31w5S?usp=sharing), junto com o vídeo e as capturas de tela (o link do EAS pode expirar no plano gratuito). Para instalar no Android, baixe o arquivo no celular e permita a instalação de fontes desconhecidas.
+
 ---
 
 ## 6 Principais Endpoints Consumidos
