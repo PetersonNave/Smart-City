@@ -1,13 +1,11 @@
 import { StyleSheet, View } from 'react-native';
 import { Controller, type Control, type FieldErrors } from 'react-hook-form';
-import { DEMANDA_CATEGORIAS, type DemandaCategoria, type DemandaRegiao } from '../../api/demandas';
 import { PhotoField } from '../../components/PhotoField';
 import { SelectField } from '../../components/SelectField';
 import { TextField } from '../../components/TextField';
-import { CATEGORIA_LABELS, REGIAO_OPTIONS } from '../../domain/demanda';
+import { CATEGORIA_OPTIONS, REGIAO_OPTIONS } from '../../domain/demanda';
 import type { DemandaFormValues } from './demandaForm.schema';
-
-const CATEGORIA_OPTIONS = DEMANDA_CATEGORIAS.map((value) => ({ value, label: CATEGORIA_LABELS[value] }));
+import type { DemandaCategoria, DemandaRegiao } from '../../types';
 
 export type DemandaFormFieldsProps = {
   control: Control<DemandaFormValues>;

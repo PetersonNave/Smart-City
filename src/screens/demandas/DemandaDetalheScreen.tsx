@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { type Demanda, type DemandaStatus } from '../../api/demandas';
 import { useAuth } from '../../auth/AuthContext';
 import { Button } from '../../components/Button';
 import { DemandThumb } from '../../components/DemandThumb';
@@ -28,6 +27,7 @@ import {
 import { parseEditFeedback, parseIdParam, routes } from '../../navigation/routes';
 import { useDemandStore } from '../../stores/demandStore';
 import { colors, fonts, palette } from '../../theme';
+import type { Demanda, DemandaStatus } from '../../types';
 
 // Figma "Detalhe da Demanda" e o estado após editar ("Demanda atualizada com sucesso!").
 export function DemandaDetalheScreen() {

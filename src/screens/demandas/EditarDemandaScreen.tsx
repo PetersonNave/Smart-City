@@ -4,14 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  atualizarDemanda,
-  enviarFotoDemanda,
-  obterDemanda,
-  type Demanda,
-  type DemandaCategoria,
-  type EditarDemandaInput,
-} from '../../api/demandas';
+import { atualizarDemanda, enviarFotoDemanda, obterDemanda } from '../../api/demandas';
 import { ApiValidationError } from '../../api/envelope';
 import { useAuth } from '../../auth/AuthContext';
 import { Button } from '../../components/Button';
@@ -27,6 +20,7 @@ import { useDemandStore } from '../../stores/demandStore';
 import { fonts, palette } from '../../theme';
 import { DemandaFormFields } from './DemandaFormFields';
 import { DEMANDA_FORM_VAZIO, editarDemandaSchema, type DemandaFormValues } from './demandaForm.schema';
+import type { Demanda, DemandaCategoria, EditarDemandaInput } from '../../types';
 
 const TEXT_FIELDS = ['titulo', 'descricao', 'categoria', 'localizacao', 'regiao'] as const;
 

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import type { FotoLocal } from '../../api/demandas';
 import { colors, fonts, palette } from '../../theme';
 import { CameraCapture } from '../CameraCapture';
 import { Icon } from '../Icon';
+import type { FotoLocal } from '../../types';
 
 export type PhotoFieldProps = {
   /** Foto escolhida agora no aparelho (ainda não enviada). */

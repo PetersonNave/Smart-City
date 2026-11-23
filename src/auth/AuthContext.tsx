@@ -1,16 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { getStoredTokens, setStoredTokens, clearStoredTokens } from './storage';
 import { setOnRefreshFailure } from '../api/client';
-import {
-  register as apiRegister,
-  login as apiLogin,
-  getMe,
-  logout as apiLogout,
-  type AuthUser,
-} from '../api/auth';
+import { register as apiRegister, login as apiLogin, getMe, logout as apiLogout } from '../api/auth';
 import { isNetworkError } from '../api/envelope';
 import { useDemandStore } from '../stores/demandStore';
 import { CACHE_KEYS, clearCache, readCache, writeCache } from '../storage/cache';
+import type { AuthUser } from '../types';
 
 // Ao trocar de sessão, nada da conta anterior pode continuar em cache (demandas, filtros),
 // nem na memória nem no AsyncStorage.

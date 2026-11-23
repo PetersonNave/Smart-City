@@ -1,7 +1,6 @@
-import type { AuthUser } from '../api/auth';
-import type { Demanda, DemandaCategoria, DemandaRegiao, DemandaStatus } from '../api/demandas';
 import type { IconName } from '../components/Icon';
 import { palette } from '../theme';
+import type { AuthUser, Demanda, DemandaCategoria, DemandaRegiao, DemandaStatus } from '../types';
 
 export const CATEGORIA_LABELS: Record<DemandaCategoria, string> = {
   ROAD_MAINTENANCE: 'Manutenção de vias',

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Image, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import type { DemandaCategoria } from '../../api/demandas';
 import { CATEGORIA_ICONS } from '../../domain/demanda';
 import { colors, palette } from '../../theme';
 import { Icon } from '../Icon';
+import type { DemandaCategoria } from '../../types';
 
 export type DemandThumbProps = {
   category: DemandaCategoria;

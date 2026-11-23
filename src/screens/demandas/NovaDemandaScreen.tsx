@@ -5,13 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ApiValidationError } from '../../api/envelope';
-import {
-  criarDemanda,
-  enviarFotoDemanda,
-  type Demanda,
-  type DemandaCategoria,
-  type DemandaRegiao,
-} from '../../api/demandas';
+import { criarDemanda, enviarFotoDemanda } from '../../api/demandas';
 import { Button } from '../../components/Button';
 import { GradientBackground } from '../../components/GradientBackground';
 import { Icon } from '../../components/Icon';
@@ -24,6 +18,7 @@ import { useDemandStore } from '../../stores/demandStore';
 import { fonts, palette } from '../../theme';
 import { DemandaFormFields } from './DemandaFormFields';
 import { DEMANDA_FORM_VAZIO, novaDemandaSchema, type DemandaFormValues } from './demandaForm.schema';
+import type { Demanda, DemandaCategoria, DemandaRegiao } from '../../types';
 
 const API_FIELDS = ['titulo', 'descricao', 'categoria', 'localizacao', 'regiao'] as const;
 

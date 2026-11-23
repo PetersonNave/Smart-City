@@ -2,12 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  type Demanda,
-  type DemandaCategoria,
-  type DemandaRegiao,
-  type DemandaStatus,
-} from '../../api/demandas';
 import { useAuth } from '../../auth/AuthContext';
 import { Button } from '../../components/Button';
 import { ConfirmModal } from '../../components/ConfirmModal';
@@ -28,22 +22,18 @@ import {
   REGIAO_LABELS,
   REGIAO_OPTIONS,
   STATUS_META,
+  STATUS_OPTIONS,
   podeExcluir,
 } from '../../domain/demanda';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { routes } from '../../navigation/routes';
 import { useDemandStore } from '../../stores/demandStore';
 import { fonts, palette } from '../../theme';
+import type { Demanda, DemandaCategoria, DemandaRegiao, DemandaStatus } from '../../types';
 
 type StatusFiltro = 'TODAS' | DemandaStatus;
 
-const STATUS_OPTIONS: SegmentOption<StatusFiltro>[] = [
-  { value: 'TODAS', label: 'Todas' },
-  ...(['PENDING', 'IN_PROGRESS', 'RESOLVED', 'REJECTED'] as const).map((value) => ({
-    value,
-    label: STATUS_META[value].label,
-  })),
-];
+const STATUS_FILTRO_OPTIONS: SegmentOption<StatusFiltro>[] = [{ value: 'TODAS', label: 'Todas' }, ...STATUS_OPTIONS];
 
 const TODAS = 'TODAS' as const;
 
@@ -135,7 +125,7 @@ export function DemandasListaScreen() {
             testID="demandas-busca"
           />
           <SegmentedControl
-            options={STATUS_OPTIONS}
+            options={STATUS_FILTRO_OPTIONS}
             value={statusFiltro}
             onChange={(value) => setFilters({ status: value === 'TODAS' ? undefined : value })}
             accessibilityLabel="Filtrar por status"

@@ -2,11 +2,11 @@ import { useRef, useState } from 'react';
 import { Image, Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { CameraView, useCameraPermissions, type CameraType } from 'expo-camera';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { FotoLocal } from '../../api/demandas';
 import { colors, fonts, palette } from '../../theme';
 import { Button } from '../Button';
 import { Icon } from '../Icon';
 import { Loading } from '../Loading';
+import type { FotoLocal } from '../../types';
 
 export type CameraCaptureProps = {
   visible: boolean;

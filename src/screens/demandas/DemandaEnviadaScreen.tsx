@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { obterDemanda, type Demanda } from '../../api/demandas';
+import { obterDemanda } from '../../api/demandas';
 import { Button } from '../../components/Button';
 import { GradientBackground } from '../../components/GradientBackground';
 import { Icon } from '../../components/Icon';
@@ -11,6 +11,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { STATUS_META, formatarProtocolo } from '../../domain/demanda';
 import { paramValue, parseIdParam, routes } from '../../navigation/routes';
 import { fonts, palette } from '../../theme';
+import type { Demanda } from '../../types';
 
 // Figma "Demanda enviada". Recebe só o id pela URL e busca a demanda (protocolo e status).
 export function DemandaEnviadaScreen() {

@@ -1,17 +1,8 @@
 import { create } from 'zustand';
-import {
-  atualizarStatusDemanda,
-  excluirDemanda,
-  listarDemandas,
-  obterDemanda,
-  type Demanda,
-  type DemandaCategoria,
-  type DemandaRegiao,
-  type DemandaStatus,
-  type ListarDemandasParams,
-} from '../api/demandas';
+import { atualizarStatusDemanda, excluirDemanda, listarDemandas, obterDemanda } from '../api/demandas';
 import { isNetworkError } from '../api/envelope';
 import { CACHE_KEYS, readCache, writeCache } from '../storage/cache';
+import type { Demanda, DemandaCategoria, DemandaRegiao, DemandaStatus, ListarDemandasParams } from '../types';
 
 export const DEMANDAS_PER_PAGE = 10;
 
