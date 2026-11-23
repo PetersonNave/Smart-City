@@ -60,8 +60,8 @@
     "test": "jest",
     "build:apk": "npx --yes eas-cli@latest build --platform android --profile preview",
     "build:ios": "npx --yes eas-cli@latest build --platform ios --profile preview",
-    "update:preview": "npx --yes eas-cli@latest update --channel preview",
-    "update:production": "npx --yes eas-cli@latest update --channel production"
+    "update:preview": "npx --yes eas-cli@latest update --channel preview --environment preview",
+    "update:production": "npx --yes eas-cli@latest update --channel production --environment production"
   },
   "private": true,
   "jest": {
