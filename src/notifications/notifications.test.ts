@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { registrarPushToken } from '../api/notificacoes';
 import {
@@ -88,5 +89,52 @@ describe('notifications', () => {
     expect(demandaIdFromNotification(build({ tipo: 'status_demanda', demandaId: 7, status: 'IN_PROGRESS' }))).toBe(7);
     expect(demandaIdFromNotification(build({ tipo: 'outro', demandaId: 7 }))).toBeNull();
     expect(demandaIdFromNotification(build({ tipo: 'status_demanda', demandaId: 'x' }))).toBeNull();
+  });
+
+  describe('D-14: canal rejeitado no Expo Go para Android', () => {
+    beforeEach(() => {
+      jest.replaceProperty(Platform, 'OS', 'android');
+      jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+      (Notifications.setNotificationChannelAsync as jest.Mock).mockRejectedValueOnce(
+        new Error("Call to function 'ExpoNotificationChannelManager.setNotificationChannelAsync' has been rejected.")
+      );
+    });
+    afterEach(() => jest.restoreAllMocks());
+
+    it('still asks for permission and falls back to local notifications', async () => {
+      setProjectId('project-123');
+      (Notifications.getPermissionsAsync as jest.Mock).mockResolvedValueOnce({ granted: false, canAskAgain: true });
+      (Notifications.requestPermissionsAsync as jest.Mock).mockResolvedValueOnce({ granted: true });
+      (Notifications.getExpoPushTokenAsync as jest.Mock).mockRejectedValueOnce(new Error('Expo Go'));
+
+      await expect(registerForDemandNotifications()).resolves.toEqual({ mode: 'local', reason: 'Expo Go' });
+      expect(Notifications.requestPermissionsAsync).toHaveBeenCalled();
+      expect(console.warn).toHaveBeenCalled();
+    });
+
+    it('schedules the local notice on the default channel', async () => {
+      (Notifications.getPermissionsAsync as jest.Mock).mockResolvedValueOnce({ granted: true });
+      setProjectId(undefined);
+      await registerForDemandNotifications();
+
+      await notifyStatusChangeLocally({ id: 5, title: 'Buraco', status: 'IN_PROGRESS' } as never);
+
+      const request = (Notifications.scheduleNotificationAsync as jest.Mock).mock.calls[0][0];
+      expect(request.trigger).toBeNull();
+      expect(request.content.title).toBe('Sua demanda foi atualizada');
+      expect(request.content.body).toBe('"Buraco" agora está: Em análise.');
+    });
+
+    it('uses the "demandas" channel when it could be created', async () => {
+      (Notifications.setNotificationChannelAsync as jest.Mock).mockReset().mockResolvedValue(null);
+      (Notifications.getPermissionsAsync as jest.Mock).mockResolvedValueOnce({ granted: true });
+      setProjectId(undefined);
+      await registerForDemandNotifications();
+
+      await notifyStatusChangeLocally({ id: 5, title: 'Buraco', status: 'IN_PROGRESS' } as never);
+
+      const request = (Notifications.scheduleNotificationAsync as jest.Mock).mock.calls[0][0];
+      expect(request.trigger).toEqual({ channelId: 'demandas' });
+    });
   });
 });

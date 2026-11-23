@@ -36,8 +36,10 @@ export function useDemandNotifications(): PushRegistration | null {
       .then((result) => {
         if (active) setRegistration(result);
       })
-      .catch(() => {
-        // Sem permissão/serviço: o app funciona normalmente, só sem avisos.
+      .catch((error) => {
+        // Sem permissão/serviço o app funciona normalmente, só sem avisos. O erro fica no log
+        // (antes era engolido em silêncio, o que escondeu o defeito D-14).
+        console.warn('[notificações] registro falhou:', error);
       });
     return () => {
       active = false;
@@ -49,7 +51,9 @@ export function useDemandNotifications(): PushRegistration | null {
   useEffect(() => {
     if (gestor || registration?.mode !== 'local') return;
     setStatusChangeListener((demanda) => {
-      notifyStatusChangeLocally(demanda).catch(() => {});
+      notifyStatusChangeLocally(demanda).catch((error) => {
+        console.warn('[notificações] aviso local falhou:', error);
+      });
     });
     return () => setStatusChangeListener(null);
   }, [gestor, registration?.mode]);

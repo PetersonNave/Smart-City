@@ -1,9 +1,9 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
-import type { Demanda, DemandaStatus } from '../api/demandas';
 import { registrarPushToken } from '../api/notificacoes';
 import { STATUS_META } from '../domain/demanda';
+import type { Demanda, DemandaStatus } from '../types';
 
 // Fluxo "registrar → acompanhar → notificar":
 // - Push remoto (principal): o app envia o Expo push token ao backend; quando o gestor muda
@@ -36,14 +36,27 @@ export function configureNotificationHandler() {
   });
 }
 
-/** Android 8+: notificações precisam de um canal (e o pedido de permissão do Android 13 também). */
-async function ensureAndroidChannel() {
-  if (Platform.OS !== 'android') return;
-  await Notifications.setNotificationChannelAsync(DEMANDAS_CHANNEL_ID, {
-    name: 'Andamento das demandas',
-    description: 'Avisos quando o status de uma demanda sua muda.',
-    importance: Notifications.AndroidImportance.HIGH,
-  });
+// Se o canal "demandas" foi criado. No Expo Go para Android a criação pode ser rejeitada pelo
+// código nativo (NullPointerException, defeito D-14): o app segue com o canal padrão.
+let demandasChannelReady = false;
+
+/** Android 8+: notificações precisam de um canal. Retorna se o canal "demandas" existe. */
+async function ensureAndroidChannel(): Promise<boolean> {
+  if (Platform.OS !== 'android') return false;
+  try {
+    await Notifications.setNotificationChannelAsync(DEMANDAS_CHANNEL_ID, {
+      name: 'Andamento das demandas',
+      description: 'Avisos quando o status de uma demanda sua muda.',
+      importance: Notifications.AndroidImportance.HIGH,
+    });
+    demandasChannelReady = true;
+  } catch (error) {
+    // Não pode derrubar o resto: sem o canal próprio, a permissão e o aviso continuam
+    // funcionando pelo canal padrão do aparelho.
+    demandasChannelReady = false;
+    console.warn('[notificações] canal "demandas" indisponível, usando o canal padrão:', error);
+  }
+  return demandasChannelReady;
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {
@@ -94,7 +107,8 @@ export async function notifyStatusChangeLocally(demanda: Demanda) {
       data,
       sound: 'default',
     },
-    trigger: Platform.OS === 'android' ? { channelId: DEMANDAS_CHANNEL_ID } : null,
+    // Sem o canal "demandas" (ver ensureAndroidChannel), o Android usa o canal padrão.
+    trigger: Platform.OS === 'android' && demandasChannelReady ? { channelId: DEMANDAS_CHANNEL_ID } : null,
   });
 }
 
