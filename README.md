@@ -123,7 +123,13 @@ Back-end, banco de dados e variáveis de ambiente do servidor (`DATABASE_URL`, `
 
 ### 5.1 Vídeo demonstrativo
 
-Screencast do sistema completo integrado (cadastro/login → registro de demanda com foto e GPS → acompanhamento e filtros → atualização de status pelo gestor → notificação ao cidadão): **[link do vídeo](COLOQUE_AQUI_O_LINK_DO_VIDEO)**
+Screencast do sistema completo integrado (cadastro/login → registro de demanda com foto e GPS → acompanhamento e filtros → atualização de status pelo gestor → notificação ao cidadão): **[assistir ao screencast](https://drive.google.com/file/d/1p9PXdmdjgWx8aXJjIs4rOPk6fQDejY98/view?usp=sharing)**
+
+Capturas de tela de cada etapa e o vídeo: [pasta "Resolve Aí - Artefatos" no Google Drive](https://drive.google.com/drive/folders/1AaSOULox6kcH_JVv3spxGQPBRpN31w5S?usp=sharing).
+
+### 5.2 Build final
+
+APK Android (perfil `preview`, Expo SDK 58, apontando para a API publicada): [página do build no EAS](https://expo.dev/accounts/peterson_meloo/projects/smart-city/builds/db219da0-17dd-4a7a-8f90-4b0d180aeb62) · [download do APK](https://expo.dev/artifacts/eas/BVc5EaJ6nLSNu6nxyWkHLp8H8uT_cqDOeT4YUImNT14.apk)
 
 ---
 
