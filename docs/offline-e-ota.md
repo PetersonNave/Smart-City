@@ -8,6 +8,8 @@
 - `src/updates/useOtaUpdates.ts`: ao abrir o app, verifica e baixa o update em segundo plano e
   pergunta se o usuário quer reiniciar. Desligado em desenvolvimento.
 - Publicar: `npm run update:preview` (ou `update:production`). Requer um build feito depois desta mudança.
+- A URL da API do update vem do `.env.production` (o `eas update` exporta em modo produção), não do `.env`
+  local. Sem isso, um update publicado da máquina de desenvolvimento faria o APK chamar o IP do PC.
 
 ## Modo offline / cache local (`AsyncStorage`)
 
