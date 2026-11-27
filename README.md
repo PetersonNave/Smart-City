@@ -96,11 +96,11 @@ O Expo expõe ao código do app apenas variáveis com o prefixo `EXPO_PUBLIC_`. 
 
 Organização de pastas:
 
-* `/src/api`: Cliente HTTP (Axios com refresh de token), envelope de resposta e chamadas de autenticação, demandas, métricas e push token
+* `/src/api`: Cliente HTTP (Axios com refresh de token), envelope de resposta e chamadas de autenticação, demandas, métricas, insights da cidade e push token
 * `/src/notifications`: Permissão, registro do push token, notificação local e navegação ao tocar
 * `/src/auth`: Estado global de sessão (Context) e armazenamento seguro de tokens (SecureStore)
 * `/src/stores`: Estado global das demandas (Zustand)
-* `/src/components`: Componentes reutilizáveis de UI (Button, TextField, SelectField, PhotoField, DemandCard, StatusBadge, TabBar, ConfirmModal, Toast...)
+* `/src/components`: Componentes reutilizáveis de UI (Button, TextField, SelectField, PhotoField, DemandCard, StatusBadge, TabBar, BarList, DonutChart, ConfirmModal, Toast...)
 * `/src/domain`: Regras e formatação de domínio (rótulos de categoria/status, datas, protocolo, permissão de exclusão)
 * `/src/hooks`: Hooks reutilizáveis (ex.: endereço atual via GPS)
 * `/app`: Rotas do Expo Router (cada arquivo é uma tela/URL; os `_layout.tsx` definem pilhas, abas e a proteção por login)
@@ -161,6 +161,39 @@ Uma cópia do APK também está na [pasta "Resolve Aí - Artefatos" no Google Dr
 | `DELETE` | `/api/demandas/{id}` | Remove uma demanda (respeitando regras de role) |
 | `PUT` | `/api/demandas/{id}/foto` | Envia/substitui a foto da demanda (`multipart/form-data`, campo `foto`) |
 | `GET` | `/api/demandas/fotos/{arquivo}` | Imagem da demanda (use o `photoUrl` retornado) |
+
+### 6.3 Insights da cidade (`/api/insights`)
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| `GET` | `/api/insights/recife?rpa=1..6` | Dados abertos da Central 156 lidos do Neon, a camada prata da pipeline de dados (somente gestor) |
+
+---
+
+## 6A Insights da cidade (produto de dados)
+
+Tela do gestor (Painel do Gestor → **Insights da cidade**) que leva para o app o dashboard da
+pipeline de dados do grupo, [etl-smart-city](https://github.com/victorrmatiass/etl-smart-city).
+Mostra as solicitações da Central 156 (EMLURB) do Recife: total, taxa de atendimento, demandas em
+andamento, bairros, distribuição por situação, serviços mais pedidos, volume por RPA e bairros
+com mais demandas, com filtro por RPA.
+
+Caminho do dado:
+
+```
+API CKAN (Dados Abertos do Recife)
+  → MongoDB Atlas (bronze, lotes históricos)          [etl-smart-city, orquestrado com Prefect]
+  → transformação (limpeza, categorias, auditoria)
+  → Neon / PostgreSQL (prata: emlurb_156_demandas, emlurb_156_auditoria)
+  → backend Flask GET /api/insights/recife            [leitura somente, cache de 10 min]
+  → app ResolveAí (InsightsCidadeScreen)
+```
+
+O app não fala com a API pública nem com o banco: quem lê o Neon é o backend, com a connection
+string em `NEON_DATABASE_URL` (variável de ambiente do servidor, fora do código). Sem ela, ou com o
+Neon fora do ar, a rota responde `503` e a tela mostra a mensagem de erro, sem números inventados.
+O card "De onde vêm esses dados" mostra o período, a data da carga e a reconciliação
+bronze = prata registrada pela pipeline.
 
 ---
 
