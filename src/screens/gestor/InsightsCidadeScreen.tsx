@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -49,19 +49,27 @@ export function InsightsCidadeScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Só a resposta do último pedido conta: trocar de RPA rápido não deixa números de outra região na tela.
+  const ultimoPedido = useRef(0);
+
   const load = useCallback(async (filtro: number | undefined) => {
+    const pedido = ++ultimoPedido.current;
+    setIsLoading(true);
     try {
-      setDados(await obterInsightsRecife(filtro));
+      const resposta = await obterInsightsRecife(filtro);
+      if (pedido !== ultimoPedido.current) return;
+      setDados(resposta);
       setError(null);
     } catch (loadError) {
+      if (pedido !== ultimoPedido.current) return;
       setError(loadError instanceof Error ? loadError.message : 'Não foi possível carregar os insights.');
-    } finally {
-      setIsLoading(false);
+      // Falhou ao trocar de recorte: os números na tela seriam de outra RPA, então saem.
+      setDados((anterior) => (anterior && anterior.filtro.rpa === (filtro ?? null) ? anterior : null));
     }
+    if (pedido === ultimoPedido.current) setIsLoading(false);
   }, []);
 
   useEffect(() => {
-    setIsLoading(true);
     load(rpa);
   }, [load, rpa]);
 
@@ -105,6 +113,12 @@ export function InsightsCidadeScreen() {
             </View>
 
             <RpaChips selecionada={rpa} onChange={setRpa} />
+            {isLoading && !isRefreshing && (
+              <View className="flex-row items-center justify-center gap-2" testID="insights-atualizando">
+                <Loading size="small" color={palette.white} />
+                <Text className="font-inter-semibold text-[13px] text-white">Atualizando recorte…</Text>
+              </View>
+            )}
             {error && <Text className="text-center font-inter-semibold text-[13px] text-white">{error}</Text>}
 
             <View className="flex-row flex-wrap gap-3">
@@ -150,8 +164,8 @@ export function InsightsCidadeScreen() {
                     key: String(item.rpa),
                     label: item.rpa === null ? item.nome : `${item.rpa} ${item.nome}`,
                     value: item.total,
-                    // Com filtro, a RPA escolhida fica em destaque frente às demais.
-                    color: rpa === undefined || item.rpa === rpa ? colors.navy : palette.textSubtle,
+                    // Com filtro, a RPA dos números exibidos fica em destaque frente às demais.
+                    color: dados.filtro.rpa === null || item.rpa === dados.filtro.rpa ? colors.navy : palette.textSubtle,
                   }))}
                 />
                 <BarList

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
 import { obterInsightsRecife, type InsightsRecife } from '../../api/insights';
 import { createMockRouter } from '../../test-utils/mockRouter';
 import { InsightsCidadeScreen } from './InsightsCidadeScreen';
@@ -74,6 +74,56 @@ describe('InsightsCidadeScreen', () => {
 
     await fireEvent.press(screen.getByTestId('insights-rpa-todas'));
     await waitFor(() => expect(obterInsightsRecife).toHaveBeenLastCalledWith(undefined));
+  });
+
+  it('keeps the data of the last selected RPA when responses arrive out of order', async () => {
+    const sul = { ...insights, filtro: { rpa: 6, rpa_nome: 'Sul' }, indicadores: { ...insights.indicadores, total: 2796 } };
+    let resolverSul: (value: InsightsRecife) => void = () => {};
+    (obterInsightsRecife as jest.Mock)
+      .mockResolvedValueOnce(insights)
+      .mockReturnValueOnce(new Promise((resolve) => (resolverSul = resolve)))
+      .mockResolvedValueOnce(insights);
+
+    await render(<InsightsCidadeScreen />);
+    await waitFor(() => expect(within(screen.getByTestId('insights-total')).getByText('11.374')).toBeTruthy());
+
+    await fireEvent.press(screen.getByTestId('insights-rpa-6'));
+    await fireEvent.press(screen.getByTestId('insights-rpa-todas'));
+    await waitFor(() => expect(obterInsightsRecife).toHaveBeenCalledTimes(3));
+
+    // A resposta antiga (Sul) chega por último e não pode sobrescrever a seleção atual (Todas).
+    await act(async () => resolverSul(sul));
+
+    expect(within(screen.getByTestId('insights-total')).getByText('11.374')).toBeTruthy();
+    expect(screen.getByTestId('insights-rpa-todas').props.accessibilityState).toEqual({ selected: true });
+  });
+
+  it('signals the reload while another RPA is loading', async () => {
+    (obterInsightsRecife as jest.Mock)
+      .mockResolvedValueOnce(insights)
+      .mockReturnValueOnce(new Promise(() => {}));
+
+    await render(<InsightsCidadeScreen />);
+    await waitFor(() => expect(screen.getByTestId('insights-total')).toBeTruthy());
+    expect(screen.queryByTestId('insights-atualizando')).toBeNull();
+
+    await fireEvent.press(screen.getByTestId('insights-rpa-6'));
+
+    expect(screen.getByTestId('insights-atualizando')).toBeTruthy();
+  });
+
+  it('does not show the previous region numbers when the new RPA fails', async () => {
+    (obterInsightsRecife as jest.Mock)
+      .mockResolvedValueOnce(insights)
+      .mockRejectedValueOnce(new Error('Dados da pipeline indisponíveis no momento. Tente novamente em instantes.'));
+
+    await render(<InsightsCidadeScreen />);
+    await waitFor(() => expect(screen.getByTestId('insights-total')).toBeTruthy());
+
+    await fireEvent.press(screen.getByTestId('insights-rpa-6'));
+
+    await waitFor(() => expect(screen.getByTestId('insights-error')).toBeTruthy());
+    expect(screen.queryByTestId('insights-total')).toBeNull();
   });
 
   it('shows the error and retries', async () => {
