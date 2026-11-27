@@ -4,6 +4,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { obterMetricas, type MetricasPainel } from '../../api/metricas';
 import { useAuth } from '../../auth/AuthContext';
+import { BarList } from '../../components/BarList';
 import { Button } from '../../components/Button';
 import { GradientBackground } from '../../components/GradientBackground';
 import { Icon, type IconName } from '../../components/Icon';
@@ -19,8 +20,6 @@ import {
 } from '../../domain/demanda';
 import { routes } from '../../navigation/routes';
 import { colors, palette } from '../../theme';
-
-type Barra = { key: string; label: string; value: number; color: string };
 
 // Painel do Gestor Público: indicadores operacionais vindos de GET /api/demandas/metricas
 // (rota protegida no backend pelo perfil gestor).
@@ -115,10 +114,10 @@ export function PainelGestorScreen() {
             </Text>
           </View>
 
-          <Distribuicao
+          <BarList
             title="Por categoria"
             testID="painel-categorias"
-            barras={CATEGORIA_OPTIONS.map(({ value: categoria, label }) => ({
+            items={CATEGORIA_OPTIONS.map(({ value: categoria, label }) => ({
               key: categoria,
               label,
               value: metricas.por_categoria[categoria] ?? 0,
@@ -126,10 +125,10 @@ export function PainelGestorScreen() {
             }))}
           />
 
-          <Distribuicao
+          <BarList
             title="Por região"
             testID="painel-regioes"
-            barras={[
+            items={[
               ...REGIAO_OPTIONS.map(({ value: regiao, label }) => ({
                 key: regiao,
                 label,
@@ -184,27 +183,6 @@ function Kpi({
         </Text>
         <Text className="font-inter-semibold text-[13px] text-textMuted">{label}</Text>
       </View>
-    </View>
-  );
-}
-
-function Distribuicao({ title, barras, testID }: { title: string; barras: Barra[]; testID?: string }) {
-  const max = Math.max(1, ...barras.map((barra) => barra.value));
-  return (
-    <View className="gap-3 rounded-card bg-white p-5 shadow-md" testID={testID}>
-      <Text className="font-inter-bold text-xs uppercase text-primary">{title}</Text>
-      {barras.map((barra) => (
-        <View key={barra.key} className="gap-1" accessible accessibilityLabel={`${barra.label}: ${barra.value}`}>
-          <View className="flex-row justify-between">
-            <Text className="font-inter-medium text-[13px] text-text">{barra.label}</Text>
-            <Text className="font-inter-bold text-[13px] text-text">{barra.value}</Text>
-          </View>
-          <View className="h-2 overflow-hidden rounded bg-surfaceMuted">
-            {/* Largura proporcional ao maior valor: calculada, por isso em style. */}
-            <View className="h-2 rounded" style={{ width: `${(barra.value / max) * 100}%`, backgroundColor: barra.color }} />
-          </View>
-        </View>
-      ))}
     </View>
   );
 }
