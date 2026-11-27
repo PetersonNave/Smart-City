@@ -96,6 +96,12 @@ describe('app routes (Expo Router)', () => {
     expect(screen.getByTestId('tab-index').props.accessibilityState).toEqual({ selected: true });
   });
 
+  it('keeps citizens out of the manager-only /insights', async () => {
+    const app = await renderApp('authenticated', '/insights');
+
+    await waitFor(() => expect(app.getPathname()).toBe('/'));
+  });
+
   it('keeps logged-in users out of /login', async () => {
     const app = await renderApp('authenticated', '/login');
 

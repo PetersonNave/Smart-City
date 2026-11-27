@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { obterMetricas, type MetricasPainel } from '../../api/metricas';
@@ -138,6 +138,24 @@ export function PainelGestorScreen() {
               { key: 'NAO_INFORMADA', label: 'Não informada', value: metricas.por_regiao.NAO_INFORMADA ?? 0, color: palette.textSubtle },
             ]}
           />
+
+          <Pressable
+            onPress={() => router.push(routes.insights)}
+            accessibilityRole="button"
+            className="flex-row items-center gap-3 rounded-card bg-white p-5 shadow-md active:opacity-80"
+            testID="painel-insights"
+          >
+            <View className="h-11 w-11 items-center justify-center rounded-xl bg-infoSoft">
+              <Icon name="lightbulb" size={22} color={colors.primary} />
+            </View>
+            <View className="flex-1">
+              <Text className="font-inter-bold text-[15px] text-navy">Insights da cidade</Text>
+              <Text className="font-inter-medium text-[13px] text-textMuted">
+                Dados abertos do Recife lidos da nossa pipeline
+              </Text>
+            </View>
+            <Icon name="chevronRight" size={20} color={colors.primary} />
+          </Pressable>
 
           <Button
             label="Analisar demandas"

@@ -71,4 +71,14 @@ describe('PainelGestorScreen', () => {
 
     expect(mockRouter.push).toHaveBeenCalledWith('/demandas');
   });
+
+  it('opens the city insights from the open data pipeline', async () => {
+    (obterMetricas as jest.Mock).mockResolvedValue(metricas);
+    await render(<PainelGestorScreen />);
+    await waitFor(() => expect(screen.getByTestId('painel-insights')).toBeTruthy());
+
+    await fireEvent.press(screen.getByTestId('painel-insights'));
+
+    expect(mockRouter.push).toHaveBeenCalledWith('/insights');
+  });
 });

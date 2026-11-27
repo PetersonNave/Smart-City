@@ -15,6 +15,7 @@ export default function AppLayout() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="nova-demanda" options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="demanda-enviada" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="insights" />
     </Stack>
   );
 }

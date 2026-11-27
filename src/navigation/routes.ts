@@ -13,7 +13,8 @@
 //      │   ├─ demandas/        /demandas, /demandas/:id, /demandas/:id/editar
 //      │   └─ perfil.tsx       /perfil
 //      ├─ nova-demanda.tsx     /nova-demanda    (sem tab bar, como no Figma)
-//      └─ demanda-enviada.tsx  /demanda-enviada?id=
+//      ├─ demanda-enviada.tsx  /demanda-enviada?id=
+//      └─ insights.tsx         /insights        (só gestor: dados abertos da pipeline)
 //
 // Parâmetros de URL são sempre strings: telas recebem ids e buscam os dados na API.
 
@@ -23,6 +24,7 @@ export const routes = {
   inicio: '/',
   demandas: '/demandas',
   novaDemanda: '/nova-demanda',
+  insights: '/insights',
   demanda: (id: number) => ({ pathname: '/demandas/[id]', params: { id: String(id) } }) as const,
   editarDemanda: (id: number) => ({ pathname: '/demandas/[id]/editar', params: { id: String(id) } }) as const,
   demandaEnviada: (id: number, fotoPendente: boolean) =>
